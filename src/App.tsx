@@ -35,7 +35,8 @@ import {
   PlayCircle,
   Edit3,
   Wrench,
-  MessageSquare
+  MessageSquare,
+  Phone
 } from 'lucide-react';
 import { 
   CATEGORIES, 
@@ -47,10 +48,10 @@ import {
 } from './constants';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
-import { collection, query, onSnapshot, addDoc, serverTimestamp, getDocs, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, serverTimestamp, getDocs, where, orderBy } from 'firebase/firestore';
 
 // --- Types ---
-type Page = 'beranda' | 'pesan' | 'layanan' | 'akun' | 'login' | 'daftar-mitra' | 'kebijakan' | 'syarat-ketentuan' | 'edit-profil' | 'alamat-saya' | 'iklan-saya' | 'chat' | 'profil-mitra' | 'pesanan' | 'pesanan-pelanggan' | 'kaffa-cellular' | 'subkategori';
+type Page = 'beranda' | 'pesan' | 'layanan' | 'akun' | 'login' | 'daftar-mitra' | 'kebijakan' | 'syarat-ketentuan' | 'edit-profil' | 'alamat-saya' | 'iklan-saya' | 'chat' | 'profil-mitra' | 'pesanan' | 'kaffa-cellular' | 'subkategori' | 'peraturan-pelanggan';
 
 interface ChatMessage {
   id: string;
@@ -86,7 +87,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
     <motion.div 
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 to-blue-600 text-white"
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0F172A] text-white"
     >
       <motion.div 
         initial={{ scale: 0.8, opacity: 0 }}
@@ -94,42 +95,102 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="relative"
       >
-        <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center border-4 border-white/30 shadow-2xl backdrop-blur-md">
-          <Handshake size={64} className="text-white" />
+        <div className="w-32 h-32 bg-primary/20 rounded-[40px] flex items-center justify-center border-4 border-white/10 shadow-2xl backdrop-blur-xl relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-transparent animate-pulse" />
+          <Handshake size={64} className="text-white relative z-10" />
         </div>
-        <motion.div 
-          animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="absolute -inset-4 border-2 border-white/20 rounded-full"
-        />
       </motion.div>
-      
-      <motion.div 
+      <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.5 }}
         className="mt-8 text-center"
       >
-        <h1 className="text-4xl font-bold tracking-widest">
-          JASA<span className="text-amber-400">MITRA</span>
-        </h1>
-        <p className="text-sm opacity-90 mt-2 font-medium tracking-wide">Solusi Jasa Terpercaya</p>
+        <h1 className="text-3xl font-black italic tracking-tighter">JASA<span className="text-primary">MITRA</span></h1>
+        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.3em] mt-2">Solusi Jasa Terpercaya</p>
       </motion.div>
-
-      <div className="mt-12 flex flex-col items-center">
-        <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-        <p className="text-xs mt-4 opacity-70 font-medium">Memuat aplikasi...</p>
-      </div>
-
-      <div className="absolute bottom-12 text-center opacity-50">
-        <p className="text-[10px] font-bold">© 2026 PT JasaMitra Indonesia</p>
-        <p className="text-[10px] font-medium">Versi 1.0.0</p>
-      </div>
     </motion.div>
   );
 };
 
-const BottomNav = ({ activePage, onNav, onAdd }: { activePage: Page, onNav: (p: Page) => void, onAdd: () => void }) => {
+const OnboardingScreen = ({ onSelect }: { onSelect: (role: 'tamu' | 'mitra') => void }) => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[9998] bg-[#0F172A] text-white flex flex-col px-8 py-12"
+    >
+      <div className="flex-1 flex flex-col justify-center">
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <h2 className="text-4xl font-black leading-tight tracking-tighter mb-4">
+            Selamat Datang di <br/>
+            <span className="text-primary italic">JASAMITRA</span>
+          </h2>
+          <p className="text-slate-400 text-sm font-medium leading-relaxed max-w-[280px]">
+            Pilih peran Anda untuk memulai pengalaman terbaik bersama kami.
+          </p>
+        </motion.div>
+
+        <div className="mt-12 space-y-4">
+          <motion.button
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onSelect('tamu')}
+            className="w-full bg-white text-slate-900 p-6 rounded-[32px] flex items-center gap-5 shadow-2xl group transition-all hover:bg-primary hover:text-white"
+          >
+            <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-900 group-hover:bg-white/20 group-hover:text-white transition-colors">
+              <User size={28} />
+            </div>
+            <div className="text-left">
+              <h3 className="font-bold text-lg">Sebagai Tamu</h3>
+              <p className="text-xs opacity-60 font-medium">Cari jasa & pesan layanan</p>
+            </div>
+            <ChevronRight className="ml-auto opacity-30" size={20} />
+          </motion.button>
+
+          <motion.button
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onSelect('mitra')}
+            className="w-full bg-white/5 border border-white/10 p-6 rounded-[32px] flex items-center gap-5 backdrop-blur-xl group transition-all hover:bg-white/10"
+          >
+            <div className="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+              <Handshake size={28} />
+            </div>
+            <div className="text-left">
+              <h3 className="font-bold text-lg">Sebagai Mitra</h3>
+              <p className="text-xs opacity-60 font-medium">Tawarkan jasa & raih penghasilan</p>
+            </div>
+            <ChevronRight className="ml-auto opacity-30" size={20} />
+          </motion.button>
+        </div>
+      </div>
+
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+        className="text-center"
+      >
+        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+          Dengan melanjutkan, Anda menyetujui <br/>
+          <span className="text-primary">Syarat & Ketentuan</span> kami
+        </p>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+const BottomNav = ({ activePage, onNav, onAdd, userRole }: { activePage: Page, onNav: (p: Page) => void, onAdd: () => void, userRole: 'tamu' | 'mitra' | null }) => {
   const navItems = [
     { id: 'beranda', label: 'Beranda', icon: Home },
     { id: 'pesan', label: 'Pesan', icon: MessageSquare },
@@ -139,17 +200,20 @@ const BottomNav = ({ activePage, onNav, onAdd }: { activePage: Page, onNav: (p: 
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 glass h-20 flex items-center justify-around px-2 z-[1000] safe-bottom">
+    <nav className="fixed bottom-6 left-6 right-6 bg-white/80 backdrop-blur-xl h-16 flex items-center justify-around px-2 z-[1000] rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/20">
       {navItems.map((item) => {
         if (item.isSpecial) {
+          if (userRole === 'tamu') return <div key={item.id} className="flex-1" />;
           return (
-            <div key={item.id} className="relative -top-6">
-              <button 
+            <div key={item.id} className="relative -top-8">
+              <motion.button 
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
                 onClick={onAdd}
-                className="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-amber-500/40 border-4 border-white neo-3d"
+                className="w-14 h-14 bg-gradient-to-br from-primary to-blue-700 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/40 border-4 border-white neo-3d"
               >
                 <Plus size={28} strokeWidth={3} />
-              </button>
+              </motion.button>
             </div>
           );
         }
@@ -161,14 +225,19 @@ const BottomNav = ({ activePage, onNav, onAdd }: { activePage: Page, onNav: (p: 
           <button 
             key={item.id}
             onClick={() => onNav(item.id as Page)}
-            className={`flex flex-col items-center justify-center flex-1 transition-colors duration-300 ${isActive ? 'text-primary' : 'text-slate-400'}`}
+            className={`flex flex-col items-center justify-center flex-1 transition-all duration-300 relative ${isActive ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}
           >
-            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-            <span className="text-[10px] mt-1 font-semibold">{item.label}</span>
+            <motion.div
+              animate={isActive ? { y: -2 } : { y: 0 }}
+              className="flex flex-col items-center"
+            >
+              <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+              <span className={`text-[9px] mt-1 font-bold uppercase tracking-tighter transition-opacity ${isActive ? 'opacity-100' : 'opacity-70'}`}>{item.label}</span>
+            </motion.div>
             {isActive && (
               <motion.div 
                 layoutId="nav-indicator"
-                className="w-1 h-1 bg-primary rounded-full mt-1"
+                className="absolute -bottom-1 w-1 h-1 bg-primary rounded-full"
               />
             )}
           </button>
@@ -198,6 +267,8 @@ const PageHeader = ({ title, subtitle, onBack }: { title: string, subtitle?: str
 
 export default function App() {
   const [isSplash, setIsSplash] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [userRole, setUserRole] = useState<'tamu' | 'mitra' | null>(null);
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [services, setServices] = useState<Service[]>(INITIAL_SERVICES);
   const [activePage, setActivePage] = useState<Page>('beranda');
@@ -267,17 +338,13 @@ export default function App() {
     }
     const q = query(
       collection(db, 'chats', chatMitra.id, 'messages'),
-      import('firebase/firestore').then(f => f.orderBy('timestamp', 'asc')) as any
+      orderBy('timestamp', 'asc')
     );
-    // Note: orderBy requires an index, for now just simple query
-    const simpleQ = query(collection(db, 'chats', chatMitra.id, 'messages'));
-    const unsubscribe = onSnapshot(simpleQ, (snapshot) => {
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const msgs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as any;
-      // Sort manually if timestamp is available
-      msgs.sort((a: any, b: any) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
       setMessages(msgs);
     });
     return () => unsubscribe();
@@ -290,9 +357,12 @@ export default function App() {
   }, [messages]);
 
   const filteredServices = services.filter(s => {
-    const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCat = selectedCat === 'all' || s.cat === selectedCat;
-    const matchesSub = selectedSub === 'all' || s.subcat === selectedSub;
+    const title = s.title || '';
+    const cat = s.cat || '';
+    const subcat = s.subcat || '';
+    const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCat = selectedCat === 'all' || cat === selectedCat;
+    const matchesSub = selectedSub === 'all' || subcat === selectedSub;
     return matchesSearch && matchesCat && matchesSub;
   });
 
@@ -312,6 +382,7 @@ export default function App() {
       const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
       const userCredential = await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
       await updateProfile(userCredential.user, { displayName: signupName });
+      setIsMitra(true);
       alert('Pendaftaran berhasil! Silakan login.');
       navigateTo('login');
     } catch (error: any) {
@@ -461,7 +532,8 @@ export default function App() {
     }
   };
 
-  if (isSplash) return <SplashScreen onComplete={() => setIsSplash(false)} />;
+  if (isSplash) return <SplashScreen onComplete={() => { setIsSplash(false); setShowOnboarding(true); }} />;
+  if (showOnboarding) return <OnboardingScreen onSelect={(role) => { setUserRole(role); setShowOnboarding(false); }} />;
 
   return (
     <div className="min-h-screen pb-24">
@@ -476,31 +548,50 @@ export default function App() {
             exit={{ opacity: 0, x: 20 }}
             className="flex flex-col"
           >
-            <header className="bg-gradient-to-br from-blue-900 to-blue-700 text-white pt-8 pb-10 px-6 rounded-b-[32px] shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl" />
+            <header className="bg-[#0F172A] text-white pt-10 pb-14 px-6 rounded-b-[48px] shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-primary/20 rounded-full -mr-20 -mt-20 blur-[100px]" />
+              <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-500/10 rounded-full -ml-10 -mb-10 blur-[60px]" />
+              
               <div className="relative z-10">
-                <div className="flex justify-between items-center mb-4">
-                  <h1 className="text-xl font-bold tracking-tight">JASA<span className="text-amber-400">MITRA</span></h1>
-                  <div className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-md border border-white/20">
-                    <User size={18} />
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h1 className="text-2xl font-black tracking-tighter italic">JASA<span className="text-primary">MITRA</span></h1>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sistem Jaminan Aktif</span>
+                    </div>
                   </div>
+                  <motion.div 
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => navigateTo('akun')}
+                    className="w-11 h-11 bg-white/5 rounded-2xl flex items-center justify-center backdrop-blur-xl border border-white/10 shadow-inner cursor-pointer"
+                  >
+                    <User size={20} className="text-slate-300" />
+                  </motion.div>
                 </div>
-                <p className="text-xs opacity-80 mb-4 font-medium">Ribuan mitra tenaga ahli berpengalaman siap melayani Anda</p>
+
+                <div className="mb-6">
+                  <h2 className="text-lg font-medium text-slate-300 leading-tight">Halo, <span className="text-white font-bold">{user?.displayName?.split(' ')[0] || 'Mitra'}</span></h2>
+                  <p className="text-xs text-slate-400 mt-1">Cari jasa profesional terbaik hari ini</p>
+                </div>
                 
                 <div className="relative group">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={18} />
-                  <input 
-                    type="text" 
-                    placeholder="Cari jasa servis..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-white text-slate-900 py-3.5 pl-12 pr-4 rounded-2xl shadow-2xl outline-none focus:ring-4 ring-primary/20 transition-all font-medium text-sm"
-                  />
+                  <div className="absolute inset-0 bg-primary/20 blur-xl group-focus-within:bg-primary/30 transition-all opacity-0 group-focus-within:opacity-100" />
+                  <div className="relative flex items-center bg-white/10 backdrop-blur-2xl border border-white/10 rounded-[24px] overflow-hidden focus-within:bg-white transition-all shadow-2xl">
+                    <Search className="ml-5 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
+                    <input 
+                      type="text" 
+                      placeholder="Butuh jasa apa sekarang?" 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-transparent text-white group-focus-within:text-slate-900 py-4.5 px-4 outline-none font-bold text-sm placeholder:text-slate-500 placeholder:font-medium"
+                    />
+                  </div>
                 </div>
               </div>
             </header>
 
-            <main className="px-6 -mt-6 relative z-20">
+            <main className="px-6 -mt-8 relative z-20 pb-32">
               {/* Security Banner */}
               <motion.div 
                 initial={{ y: 20, opacity: 0 }}
@@ -519,27 +610,30 @@ export default function App() {
               </motion.div>
 
               {/* Categories */}
-              <section className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-slate-800">Kategori Layanan</h2>
-                  <button className="text-xs font-bold text-primary uppercase tracking-widest">Lihat Semua</button>
+              <section className="mb-10">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-lg font-bold text-slate-800 tracking-tight">Kategori Layanan</h2>
+                  <button className="text-[10px] font-bold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1.5 rounded-full">Lihat Semua</button>
                 </div>
-                <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
+                <div className="grid grid-cols-4 gap-4">
                   {CATEGORIES.map((cat) => (
-                    <button 
+                    <motion.button 
                       key={cat.id}
+                      whileHover={{ y: -5 }}
+                      whileTap={{ scale: 0.9 }}
                       onClick={() => {
                         setSelectedCat(cat.id);
                         setSelectedSub('all');
                         navigateTo('subkategori');
                       }}
-                      className="flex flex-col items-center gap-2 min-w-[80px]"
+                      className="flex flex-col items-center gap-2"
                     >
-                      <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${cat.color} flex items-center justify-center text-white shadow-lg neo-3d ${selectedCat === cat.id ? 'ring-4 ring-primary/30 scale-110' : 'opacity-90'}`}>
-                        <cat.icon size={28} />
+                      <div className={`w-full aspect-square rounded-3xl bg-gradient-to-br ${cat.color} flex items-center justify-center text-white shadow-lg shadow-slate-200/50 relative overflow-hidden group`}>
+                        <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <cat.icon size={24} strokeWidth={2.5} />
                       </div>
-                      <span className={`text-[11px] font-bold ${selectedCat === cat.id ? 'text-primary' : 'text-slate-500'}`}>{cat.name}</span>
-                    </button>
+                      <span className="text-[10px] font-bold text-slate-600 tracking-tighter text-center leading-tight">{cat.name}</span>
+                    </motion.button>
                   ))}
                 </div>
               </section>
@@ -576,24 +670,26 @@ export default function App() {
               </section>
 
               {/* Rekomendasi Mitra (Subscription) */}
-              <section className="mb-8">
-                <div className="flex items-center justify-between mb-4">
+              <section className="mb-10">
+                <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-bold text-slate-800">Rekomendasi Mitra</h2>
-                    <span className="bg-amber-100 text-amber-700 text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider border border-amber-200">Pro</span>
+                    <h2 className="text-lg font-bold text-slate-800 tracking-tight">Mitra Unggulan</h2>
+                    <div className="bg-amber-100 text-amber-700 text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border border-amber-200 flex items-center gap-1">
+                      <Star size={8} fill="currentColor" /> PRO
+                    </div>
                   </div>
-                  <button className="text-xs font-bold text-primary uppercase tracking-widest">Lihat Semua</button>
+                  <button className="text-[10px] font-bold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1.5 rounded-full">Lihat Semua</button>
                 </div>
-                <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-6 px-6">
+                <div className="flex gap-5 overflow-x-auto pb-6 hide-scrollbar -mx-6 px-6">
                   {[
-                    { id: 4, name: 'Kaffa Cellular', img: 'https://i.ibb.co.com/zWJ6DwYx/images-6.webp', desc: 'Gadget Solution', rating: 5.0 },
-                    { id: 102, name: 'Siti Clean', img: 'https://images.unsplash.com/photo-1581578731548-c64695cc6958?w=200', desc: 'Jasa Kebersihan Total', rating: 4.8 },
-                    { id: 103, name: 'Aris Bangun', img: 'https://images.unsplash.com/photo-1503387762-592dec5832f2?w=200', desc: 'Renovasi & Bangun Rumah', rating: 5.0 },
-                    { id: 104, name: 'Dewi Tailor', img: 'https://images.unsplash.com/photo-1552330892-344c53c33f5d?w=200', desc: 'Jahit & Permak Busana', rating: 4.7 },
-                    { id: 105, name: 'Jaya Service', img: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=200', desc: 'Servis Elektronik & HP', rating: 4.9 },
+                    { id: 4, name: 'Kaffa Cellular', img: 'https://i.ibb.co.com/zWJ6DwYx/images-6.webp', desc: 'Spesialis Servis Gadget', rating: 5.0, jobs: 120 },
+                    { id: 102, name: 'Siti Clean', img: 'https://images.unsplash.com/photo-1581578731548-c64695cc6958?w=200', desc: 'Jasa Kebersihan Profesional', rating: 4.8, jobs: 85 },
+                    { id: 103, name: 'Aris Bangun', img: 'https://images.unsplash.com/photo-1503387762-592dec5832f2?w=200', desc: 'Renovasi & Konstruksi', rating: 5.0, jobs: 45 },
+                    { id: 104, name: 'Dewi Tailor', img: 'https://images.unsplash.com/photo-1552330892-344c53c33f5d?w=200', desc: 'Jahit & Desain Busana', rating: 4.7, jobs: 210 },
                   ].map((mitra) => (
                     <motion.div 
                       key={mitra.id} 
+                      whileHover={{ y: -8 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => {
                         if (mitra.id === 4) {
@@ -602,19 +698,28 @@ export default function App() {
                           alert(`Detail ${mitra.name} akan segera hadir`);
                         }
                       }}
-                      className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 neo-3d cursor-pointer min-w-[160px] max-w-[160px] relative"
+                      className="bg-white rounded-[32px] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-slate-100 cursor-pointer min-w-[180px] max-w-[180px] relative group"
                     >
-                      <div className="absolute top-2 right-2 z-10 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-lg flex items-center gap-0.5 shadow-sm">
-                        <Star size={8} className="text-amber-500 fill-amber-500" />
-                        <span className="text-[8px] font-bold text-slate-700">{mitra.rating}</span>
+                      <div className="absolute top-3 right-3 z-10 bg-white/90 backdrop-blur-md px-2 py-1 rounded-xl flex items-center gap-1 shadow-sm border border-white/50">
+                        <Star size={10} className="text-amber-500 fill-amber-500" />
+                        <span className="text-[10px] font-black text-slate-800">{mitra.rating}</span>
                       </div>
-                      <img src={mitra.img} className="w-full h-28 object-cover" alt={mitra.name} referrerPolicy="no-referrer" />
-                      <div className="p-3">
-                        <h3 className="text-[11px] font-bold text-slate-800 truncate">{mitra.name}</h3>
-                        <p className="text-[9px] text-slate-400 font-medium line-clamp-1">{mitra.desc}</p>
-                        <div className="mt-2 flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                          <span className="text-[8px] font-bold text-emerald-600 uppercase tracking-tighter">Tersedia Sekarang</span>
+                      <div className="h-32 overflow-hidden relative">
+                        <img src={mitra.img} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={mitra.name} referrerPolicy="no-referrer" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                      </div>
+                      <div className="p-4">
+                        <div className="flex items-center gap-1 mb-1">
+                          <h3 className="text-[12px] font-bold text-slate-800 truncate">{mitra.name}</h3>
+                          <ShieldCheck size={12} className="text-primary shrink-0" />
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-medium line-clamp-1 mb-3">{mitra.desc}</p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                            <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-tighter">Online</span>
+                          </div>
+                          <span className="text-[9px] font-bold text-slate-400">{mitra.jobs} Selesai</span>
                         </div>
                       </div>
                     </motion.div>
@@ -666,43 +771,14 @@ export default function App() {
         {activePage === 'pesan' && (
           <motion.div key="pesan" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
             <PageHeader title="Pesan" subtitle="Percakapan dengan mitra & pelanggan" />
-            <main className="px-6 -mt-4 space-y-3 pb-24">
-              {[
-                { id: '1', name: 'Ahmad Fauzi', lastMsg: 'Baik pak, saya meluncur ke lokasi sekarang.', time: '10:30', unread: 2, avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100', status: 'online' },
-                { id: '2', name: 'Budi Santoso', lastMsg: 'Terima kasih atas jasanya, sangat memuaskan!', time: 'Kemarin', unread: 0, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100', status: 'offline' },
-                { id: '3', name: 'Siti Aminah', lastMsg: 'Apakah bisa servis mesin cuci besok pagi?', time: 'Senin', unread: 0, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100', status: 'online' },
-                { id: '4', name: 'Toko Material Jaya', lastMsg: 'Stok keramik putih ready banyak pak.', time: '22 Feb', unread: 1, avatar: 'https://images.unsplash.com/photo-1581850518616-bcb8186c3f30?w=100', status: 'offline' },
-              ].map((chat) => (
-                <button 
-                  key={chat.id}
-                  onClick={() => {
-                    setChatMitra({ id: chat.id, name: chat.name });
-                    navigateTo('chat');
-                  }}
-                  className="w-full bg-white p-4 rounded-[32px] shadow-sm border border-slate-100 flex items-center gap-4 active:scale-[0.98] transition-all neo-3d"
-                >
-                  <div className="relative shrink-0">
-                    <img src={chat.avatar} className="w-14 h-14 rounded-2xl object-cover shadow-inner" alt={chat.name} />
-                    {chat.status === 'online' && (
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full" />
-                    )}
-                  </div>
-                  <div className="flex-1 text-left min-w-0">
-                    <div className="flex justify-between items-center mb-1">
-                      <h3 className="text-sm font-bold text-slate-800 truncate">{chat.name}</h3>
-                      <span className="text-[10px] font-bold text-slate-400">{chat.time}</span>
-                    </div>
-                    <p className={`text-xs truncate ${chat.unread > 0 ? 'text-slate-800 font-bold' : 'text-slate-400 font-medium'}`}>
-                      {chat.lastMsg}
-                    </p>
-                  </div>
-                  {chat.unread > 0 && (
-                    <div className="w-5 h-5 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg shadow-primary/30">
-                      {chat.unread}
-                    </div>
-                  )}
-                </button>
-              ))}
+            <main className="px-6 -mt-4 space-y-3 pb-24 flex flex-col items-center justify-center min-h-[400px]">
+              <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                <MessageSquare size={32} className="text-slate-300" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-800">Belum Ada Pesan</h3>
+              <p className="text-xs font-medium text-slate-400 text-center max-w-[200px]">
+                Mulai percakapan dengan mitra untuk melihat pesan di sini.
+              </p>
             </main>
           </motion.div>
         )}
@@ -714,13 +790,13 @@ export default function App() {
             <main className="px-6 -mt-4 space-y-6">
               <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 text-center neo-3d">
                 <div className="relative w-24 h-24 mx-auto mb-4">
-                  <img src="https://ui-avatars.com/api/?name=Jasa+Mitra&background=2563eb&color=fff&size=100" className="w-full h-full rounded-full border-4 border-white shadow-lg object-cover" />
+                  <img src={user?.photoURL || "https://ui-avatars.com/api/?name=User&background=2563eb&color=fff&size=100"} className="w-full h-full rounded-full border-4 border-white shadow-lg object-cover" />
                   <button className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg"><Camera size={16} /></button>
                 </div>
                 <div className="bg-slate-50 p-3 rounded-2xl flex items-center justify-between">
                   <div className="text-left">
                     <p className="text-[10px] font-bold text-slate-400 uppercase">No. Member Mitra</p>
-                    <p className="text-xs font-bold text-slate-700">MIT-2024-001234</p>
+                    <p className="text-xs font-bold text-slate-700">-</p>
                   </div>
                   <button className="p-2 text-primary"><Copy size={16} /></button>
                 </div>
@@ -728,15 +804,13 @@ export default function App() {
               <div className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100 space-y-4">
                 <h3 className="text-sm font-bold text-primary flex items-center gap-2"><User size={18} /> Data Pribadi</h3>
                 <div className="space-y-4">
-                  <input type="text" defaultValue="Ahmad Fauzi" className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none" placeholder="Nama Lengkap" />
-                  <input type="email" defaultValue="ahmad.fauzi@email.com" className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none" placeholder="Email" />
-                  <input type="tel" defaultValue="08123456789" className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none" placeholder="Nomor HP" />
+                  <input type="text" defaultValue={user?.displayName || ""} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none" placeholder="Nama Lengkap" />
+                  <input type="email" defaultValue={user?.email || ""} className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none" placeholder="Email" />
+                  <input type="tel" defaultValue="" className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none" placeholder="Nomor HP" />
                 </div>
                 <h3 className="text-sm font-bold text-primary flex items-center gap-2 mt-6"><Wrench size={18} /> Bidang Keahlian</h3>
                 <div className="flex flex-wrap gap-2">
-                  {['Servis AC', 'Servis Kulkas', 'Instalasi Listrik', 'Servis TV'].map(k => (
-                    <span key={k} className="bg-blue-50 text-primary text-[10px] font-bold px-3 py-1.5 rounded-full">{k}</span>
-                  ))}
+                  <p className="text-xs text-slate-400 italic">Belum ada keahlian ditambahkan</p>
                 </div>
                 <button onClick={() => {alert('Profil disimpan!'); navigateTo('akun');}} className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-primary/30 mt-4">Simpan Perubahan</button>
               </div>
@@ -749,23 +823,14 @@ export default function App() {
           <motion.div key="alamat-saya" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             <PageHeader title="Alamat Saya" subtitle="Kelola alamat pengiriman" onBack={handleBack} />
             <main className="px-6 -mt-4 space-y-4">
-              <div className="bg-white p-6 rounded-[40px] shadow-sm border-l-8 border-primary neo-3d">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="bg-blue-50 text-primary text-[9px] font-extrabold px-2 py-1 rounded-full uppercase tracking-widest">Alamat Utama</span>
+              <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 text-center py-12">
+                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mx-auto mb-4">
+                  <MapPin size={32} />
                 </div>
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-primary"><Home size={24} /></div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-bold text-slate-800">Alamat Rumah</h4>
-                    <p className="text-[11px] text-slate-500 leading-relaxed mt-1">Jl. Merpati No. 123, RT 01 RW 02, Kel. Contoh, Kec. Contoh, Jakarta Selatan 12345</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 mt-6 pt-6 border-t border-slate-50">
-                  <button className="flex-1 bg-slate-50 text-slate-600 py-3 rounded-xl font-bold text-[10px]">EDIT ALAMAT</button>
-                  <button className="flex-1 bg-slate-50 text-slate-600 py-3 rounded-xl font-bold text-[10px]">LIHAT PETA</button>
-                </div>
+                <h3 className="text-sm font-bold text-slate-800">Belum Ada Alamat</h3>
+                <p className="text-xs font-medium text-slate-400 mt-2">Anda belum menambahkan alamat pengiriman.</p>
               </div>
-              <button className="w-full py-6 border-2 border-dashed border-slate-200 rounded-[40px] text-slate-400 font-bold text-xs flex items-center justify-center gap-2"><Plus size={20} /> Tambah Alamat Lain</button>
+              <button className="w-full py-6 border-2 border-dashed border-slate-200 rounded-[40px] text-slate-400 font-bold text-xs flex items-center justify-center gap-2"><Plus size={20} /> Tambah Alamat Baru</button>
             </main>
           </motion.div>
         )}
@@ -813,11 +878,11 @@ export default function App() {
             <main className="px-6 -mt-4">
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col gap-1">
-                  <span className="text-3xl font-extrabold text-primary">3</span>
+                  <span className="text-3xl font-extrabold text-primary">0</span>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aktif</span>
                 </div>
                 <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col gap-1">
-                  <span className="text-3xl font-extrabold text-emerald-500">12</span>
+                  <span className="text-3xl font-extrabold text-emerald-500">0</span>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Selesai</span>
                 </div>
               </div>
@@ -834,87 +899,65 @@ export default function App() {
                 ))}
               </div>
 
-              <div className="space-y-4">
-                <div className="bg-white p-5 rounded-3xl shadow-sm border-l-8 border-blue-500 neo-3d">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-800">Perbaikan Korsleting Listrik</h3>
-                      <p className="text-[10px] font-medium text-slate-400 mt-1">Teknisi: Budi Santoso</p>
-                    </div>
-                    <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-3 py-1 rounded-full">Dikerjakan</span>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-2">
-                      <span>Progress</span>
-                      <span>60%</span>
-                    </div>
-                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: '60%' }}
-                        className="h-full bg-blue-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="bg-slate-50 p-3 rounded-2xl mb-4 flex gap-3 items-center">
-                    <Info size={16} className="text-blue-500" />
-                    <p className="text-[10px] font-medium text-slate-600">Teknisi sedang mengganti kabel yang terbakar</p>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <div className="flex gap-4">
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
-                        <Clock size={12} /> 45m
-                      </div>
-                      <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
-                        <MapPin size={12} /> Jakarta
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => setShowTrackingModal(true)}
-                      className="bg-primary/10 text-primary text-[10px] font-bold px-4 py-2 rounded-xl active:scale-95 transition-transform"
-                    >
-                      Lacak
-                    </button>
-                  </div>
+              <div className="space-y-4 flex flex-col items-center justify-center py-12">
+                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                  <Clock size={32} className="text-slate-300" />
                 </div>
-
-                <div className="bg-white p-5 rounded-3xl shadow-sm border-l-8 border-emerald-500 neo-3d opacity-80">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-800">Pasang CCTV 4 Camera</h3>
-                      <p className="text-[10px] font-medium text-slate-400 mt-1">Teknisi: Hendra Wijaya</p>
-                    </div>
-                    <span className="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-3 py-1 rounded-full">Selesai</span>
-                  </div>
-                  <div className="flex items-center gap-1 mb-4">
-                    {[1,2,3,4,5].map(s => <Star key={s} size={12} className="text-amber-400 fill-amber-400" />)}
-                    <span className="text-[10px] font-bold text-slate-400 ml-2">5.0 | 12 Feb 2026</span>
-                  </div>
-                  <div className="flex gap-3">
-                    <button 
-                      onClick={() => navigateTo('beranda')}
-                      className="flex-1 bg-primary text-white py-3 rounded-xl font-bold text-[10px] active:scale-95 transition-transform"
-                    >
-                      PESAN LAGI
-                    </button>
-                    <button 
-                      onClick={() => setShowReviewModal(true)}
-                      className="flex-1 bg-white border border-slate-100 text-slate-500 py-3 rounded-xl font-bold text-[10px] active:scale-95 transition-transform"
-                    >
-                      BERI ULASAN
-                    </button>
-                  </div>
-                </div>
+                <h3 className="text-sm font-bold text-slate-800">Belum Ada Progress</h3>
+                <p className="text-xs font-medium text-slate-400 text-center max-w-[200px]">
+                  Pesanan jasa Anda akan muncul di sini setelah Anda melakukan pemesanan.
+                </p>
               </div>
             </main>
           </motion.div>
         )}
 
-        {/* --- AKUN --- */}
-        {activePage === 'akun' && (
+                {activePage === 'peraturan-pelanggan' && (
+                  <motion.div key="peraturan-pelanggan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                    <PageHeader title="Peraturan Pelanggan" subtitle="Hak & Kewajiban Pengguna Jasa" onBack={handleBack} />
+                    <main className="px-6 -mt-4 pb-12">
+                      <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 space-y-8 neo-3d">
+                        <div className="space-y-4">
+                          <div className="w-16 h-16 bg-blue-50 rounded-3xl flex items-center justify-center text-primary mb-6">
+                            <ShieldCheck size={32} />
+                          </div>
+                          <h3 className="text-xl font-black text-slate-800 tracking-tighter italic">Jaminan Keamanan <span className="text-primary">Pelanggan</span></h3>
+                          <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                            Sebagai platform jasa terpercaya, kami berkomitmen menjaga keamanan transaksi Anda melalui sistem jaminan 10%.
+                          </p>
+                        </div>
+
+                        <div className="space-y-6 pt-6 border-t border-slate-50">
+                          {[
+                            { title: 'Sistem Pembayaran', desc: 'Pelanggan wajib membayar DP 10% melalui aplikasi sebagai jaminan pesanan. Sisa 90% dibayarkan tunai langsung ke mitra setelah pekerjaan selesai.' },
+                            { title: 'Pembatalan Pesanan', desc: 'Pembatalan oleh pelanggan setelah mitra berangkat akan dikenakan biaya administrasi dari nilai DP yang telah dibayarkan.' },
+                            { title: 'Keamanan Data', desc: 'Dilarang memberikan nomor WhatsApp atau kontak pribadi di dalam chat sebelum terjadi kesepakatan deal untuk menghindari penipuan.' },
+                            { title: 'Etika Berinteraksi', desc: 'Berkomunikasilah dengan sopan dan hargai profesi mitra. Segala bentuk pelecehan akan berakibat pada pemblokiran akun permanen.' }
+                          ].map((item, i) => (
+                            <div key={i} className="flex gap-4">
+                              <div className="w-8 h-8 bg-slate-50 rounded-xl flex items-center justify-center text-primary font-bold text-xs shrink-0">{i + 1}</div>
+                              <div>
+                                <h4 className="text-sm font-bold text-slate-800 mb-1">{item.title}</h4>
+                                <p className="text-xs text-slate-400 leading-relaxed font-medium">{item.desc}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="bg-amber-50 p-6 rounded-3xl border border-amber-100">
+                          <div className="flex items-center gap-2 mb-2 text-amber-700">
+                            <AlertTriangle size={18} />
+                            <h4 className="text-xs font-bold uppercase tracking-widest">Peringatan Penting</h4>
+                          </div>
+                          <p className="text-[10px] text-amber-600 font-medium leading-relaxed">
+                            JasaMitra tidak bertanggung jawab atas transaksi yang dilakukan di luar sistem aplikasi. Pastikan selalu menggunakan fitur "Deal" untuk perlindungan maksimal.
+                          </p>
+                        </div>
+                      </div>
+                    </main>
+                  </motion.div>
+                )}
+                {activePage === 'akun' && (
           <motion.div 
             key="akun"
             initial={{ opacity: 0, x: 20 }}
@@ -945,15 +988,15 @@ export default function App() {
 
               <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden mb-8">
                 {[
-                  { id: 'daftar-mitra', label: 'Daftar Menjadi Mitra', icon: Wrench, color: 'text-amber-500', bg: 'bg-amber-50', isSpecial: true, hide: isMitra },
-                  { id: 'pesanan-pelanggan', label: 'Pesanan Saya (Pelanggan)', icon: ClipboardList, color: 'text-slate-600', bg: 'bg-slate-50' },
-                  { id: 'pesanan', label: 'Pesanan Masuk (Mitra)', icon: Handshake, color: 'text-blue-600', bg: 'bg-blue-50' },
-                  { id: 'edit-profil', label: 'Edit Profil', icon: Edit3, color: 'text-slate-600', bg: 'bg-slate-50' },
-                  { id: 'alamat-saya', label: 'Alamat Saya', icon: MapPin, color: 'text-slate-600', bg: 'bg-slate-50' },
-                  { id: 'iklan-saya', label: 'Iklan Saya', icon: ClipboardList, color: 'text-slate-600', bg: 'bg-slate-50' },
-                  { id: 'kebijakan', label: 'Kebijakan Privasi & Keamanan', icon: ShieldCheck, color: 'text-slate-500', bg: 'bg-slate-50' },
-                  { id: 'syarat-ketentuan', label: 'Syarat & Ketentuan', icon: FileText, color: 'text-slate-500', bg: 'bg-slate-50' },
-                ].filter(item => !item.hide).map((item) => (
+                  { id: 'peraturan-pelanggan', label: 'Peraturan Pelanggan', icon: Info, color: 'text-blue-500', bg: 'bg-blue-50', show: userRole === 'tamu' },
+                  { id: 'daftar-mitra', label: 'Daftar Menjadi Mitra', icon: Wrench, color: 'text-amber-500', bg: 'bg-amber-50', isSpecial: true, show: userRole === 'mitra' && !isMitra },
+                  { id: 'pesanan', label: 'Pesanan Masuk (Mitra)', icon: Handshake, color: 'text-blue-600', bg: 'bg-blue-50', show: isMitra },
+                  { id: 'edit-profil', label: 'Edit Profil', icon: Edit3, color: 'text-slate-600', bg: 'bg-slate-50', show: true },
+                  { id: 'alamat-saya', label: 'Alamat Saya', icon: MapPin, color: 'text-slate-600', bg: 'bg-slate-50', show: true },
+                  { id: 'iklan-saya', label: 'Iklan Saya', icon: ClipboardList, color: 'text-slate-600', bg: 'bg-slate-50', show: isMitra },
+                  { id: 'kebijakan', label: 'Kebijakan Privasi & Keamanan', icon: ShieldCheck, color: 'text-slate-500', bg: 'bg-slate-50', show: true },
+                  { id: 'syarat-ketentuan', label: 'Syarat & Ketentuan', icon: FileText, color: 'text-slate-500', bg: 'bg-slate-50', show: true },
+                ].filter(item => item.show).map((item) => (
                   <button 
                     key={item.id}
                     onClick={() => navigateTo(item.id as Page)}
@@ -1329,40 +1372,6 @@ export default function App() {
           </motion.div>
         )}
 
-        {/* --- PESANAN & BOOKING (PELANGGAN) --- */}
-        {activePage === 'pesanan-pelanggan' && (
-          <motion.div key="pesanan-pelanggan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-            <PageHeader title="Pesanan & Booking" subtitle="Kelola transaksi Anda" onBack={handleBack} />
-            <main className="bg-white min-h-screen">
-              {[
-                { id: 'paket', title: 'Beli Paket', desc: 'Jual lebih cepat, untung lebih banyak dengan Paket Bisnis', badge: 'Baru' },
-                { id: 'booking', title: 'Booking', desc: 'Lihat daftar produk yang dibooking' },
-                { id: 'pesanan', title: 'Pesanan Saya', desc: 'Pesanan aktif, terjadwal, dan berakhir' },
-                { id: 'invoice', title: 'Invoice', desc: 'Lihat dan unduh invoice Anda' },
-                { id: 'tagihan', title: 'Informasi Tagihan', desc: 'Edit nama penagihan, alamat Anda, dll.' },
-              ].map((item) => (
-                <button 
-                  key={item.id}
-                  className="w-full flex items-center justify-between p-6 border-b border-slate-50 hover:bg-slate-50 transition-colors text-left"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-base font-bold text-slate-800">{item.title}</h3>
-                      {item.badge && (
-                        <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase">
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-slate-400 font-medium">{item.desc}</p>
-                  </div>
-                  <ChevronRight size={20} className="text-slate-300" />
-                </button>
-              ))}
-            </main>
-          </motion.div>
-        )}
-
         {/* --- PESANAN MASUK (MITRA) --- */}
         {activePage === 'pesanan' && (
           <motion.div key="pesanan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
@@ -1524,11 +1533,24 @@ export default function App() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Email <span className="text-rose-500">*</span></label>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Pilihan Masuk / Akun <span className="text-rose-500">*</span></label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button className="flex items-center justify-center gap-2 bg-white border border-slate-200 p-4 rounded-2xl text-xs font-bold text-slate-700 shadow-sm active:scale-95 transition-transform">
+                        <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" className="w-4 h-4" /> Google
+                      </button>
+                      <button className="flex items-center justify-center gap-2 bg-emerald-500 p-4 rounded-2xl text-xs font-bold text-white shadow-sm active:scale-95 transition-transform">
+                        <Phone size={16} /> WhatsApp
+                      </button>
+                    </div>
+                    <div className="relative flex items-center gap-4 py-1">
+                      <div className="flex-1 h-px bg-slate-100" />
+                      <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Atau isi manual</span>
+                      <div className="flex-1 h-px bg-slate-100" />
+                    </div>
                     <input 
-                      type="email" 
-                      placeholder="Email Anda" 
+                      type="text" 
+                      placeholder="Nomor WhatsApp atau Email" 
                       value={signupEmail}
                       onChange={(e) => setSignupEmail(e.target.value)}
                       className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" 
@@ -1647,6 +1669,53 @@ export default function App() {
           </motion.div>
         )}
 
+        {/* --- PERATURAN PELANGGAN --- */}
+        {activePage === 'peraturan-pelanggan' && (
+          <motion.div key="peraturan-pelanggan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <PageHeader title="Peraturan Pelanggan" subtitle="Hak & Kewajiban Pengguna Jasa" onBack={handleBack} />
+            <main className="px-6 -mt-4 pb-12">
+              <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 space-y-8 neo-3d">
+                <div className="space-y-4">
+                  <div className="w-16 h-16 bg-blue-50 rounded-3xl flex items-center justify-center text-primary mb-6">
+                    <ShieldCheck size={32} />
+                  </div>
+                  <h3 className="text-xl font-black text-slate-800 tracking-tighter italic">Jaminan Keamanan <span className="text-primary">Pelanggan</span></h3>
+                  <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                    Sebagai platform jasa terpercaya, kami berkomitmen menjaga keamanan transaksi Anda melalui sistem jaminan 10%.
+                  </p>
+                </div>
+
+                <div className="space-y-6 pt-6 border-t border-slate-50">
+                  {[
+                    { title: 'Sistem Pembayaran', desc: 'Pelanggan wajib membayar DP 10% melalui aplikasi sebagai jaminan pesanan. Sisa 90% dibayarkan tunai langsung ke mitra setelah pekerjaan selesai.' },
+                    { title: 'Pembatalan Pesanan', desc: 'Pembatalan oleh pelanggan setelah mitra berangkat akan dikenakan biaya administrasi dari nilai DP yang telah dibayarkan.' },
+                    { title: 'Keamanan Data', desc: 'Dilarang memberikan nomor WhatsApp atau kontak pribadi di dalam chat sebelum terjadi kesepakatan deal untuk menghindari penipuan.' },
+                    { title: 'Etika Berinteraksi', desc: 'Berkomunikasilah dengan sopan dan hargai profesi mitra. Segala bentuk pelecehan akan berakibat pada pemblokiran akun permanen.' }
+                  ].map((item, i) => (
+                    <div key={i} className="flex gap-4">
+                      <div className="w-8 h-8 bg-slate-50 rounded-xl flex items-center justify-center text-primary font-bold text-xs shrink-0">{i + 1}</div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-800 mb-1">{item.title}</h4>
+                        <p className="text-xs text-slate-400 leading-relaxed font-medium">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-amber-50 p-6 rounded-3xl border border-amber-100">
+                  <div className="flex items-center gap-2 mb-2 text-amber-700">
+                    <AlertTriangle size={18} />
+                    <h4 className="text-xs font-bold uppercase tracking-widest">Peringatan Penting</h4>
+                  </div>
+                  <p className="text-[10px] text-amber-600 font-medium leading-relaxed">
+                    JasaMitra tidak bertanggung jawab atas transaksi yang dilakukan di luar sistem aplikasi. Pastikan selalu menggunakan fitur "Deal" untuk perlindungan maksimal.
+                  </p>
+                </div>
+              </div>
+            </main>
+          </motion.div>
+        )}
+
         {/* --- LOGIN --- */}
         {activePage === 'login' && (
           <motion.div key="login" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
@@ -1654,38 +1723,54 @@ export default function App() {
             <main className="px-6 -mt-4">
               <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 space-y-6">
                 <div className="space-y-4">
-                  <input 
-                    type="email" 
-                    placeholder="Email" 
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" 
-                  />
-                  <input 
-                    type="password" 
-                    placeholder="Kata Sandi" 
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" 
-                  />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Email / WhatsApp</label>
+                    <input 
+                      type="text" 
+                      placeholder="Masukkan email atau nomor WA" 
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Kata Sandi</label>
+                    <input 
+                      type="password" 
+                      placeholder="Masukkan kata sandi" 
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" 
+                    />
+                  </div>
                 </div>
                 <button 
                   onClick={handleLogin}
                   className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-primary/30 active:scale-95 transition-transform"
                 >
-                  Masuk
+                  Masuk Sekarang
                 </button>
-                <div className="text-center">
-                  <button onClick={() => navigateTo('daftar-mitra')} className="text-xs font-bold text-primary">Belum punya akun? Daftar di sini</button>
-                </div>
-                <div className="flex items-center gap-4 py-2">
+                
+                <div className="relative flex items-center gap-4 py-2">
                   <div className="flex-1 h-px bg-slate-100" />
-                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Atau</span>
+                  <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Atau masuk dengan</span>
                   <div className="flex-1 h-px bg-slate-100" />
                 </div>
-                <button className="w-full bg-white border border-slate-200 text-slate-700 py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-3 shadow-sm active:scale-95 transition-transform">
-                  <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" className="w-5 h-5" /> Lanjutkan dengan Google
-                </button>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <button className="flex items-center justify-center gap-2 bg-white border border-slate-200 p-4 rounded-2xl text-xs font-bold text-slate-700 shadow-sm active:scale-95 transition-transform">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" className="w-4 h-4" /> Google
+                  </button>
+                  <button className="flex items-center justify-center gap-2 bg-emerald-500 p-4 rounded-2xl text-xs font-bold text-white shadow-sm active:scale-95 transition-transform">
+                    <Phone size={16} /> WhatsApp
+                  </button>
+                </div>
+
+                {userRole === 'mitra' && (
+                  <p className="text-center text-xs font-medium text-slate-400">
+                    Belum punya akun mitra? <button onClick={() => navigateTo('daftar-mitra')} className="text-primary font-bold">Daftar Di Sini</button>
+                  </p>
+                )}
               </div>
             </main>
           </motion.div>
@@ -2211,7 +2296,18 @@ export default function App() {
 
       {/* Bottom Nav (Only on main pages) */}
       {['beranda', 'pesan', 'layanan', 'akun'].includes(activePage) && (
-        <BottomNav activePage={activePage} onNav={navigateTo} onAdd={() => setShowAdModal(true)} />
+        <BottomNav 
+          activePage={activePage} 
+          onNav={navigateTo} 
+          onAdd={() => {
+            if (isMitra) {
+              setShowAdModal(true);
+            } else {
+              navigateTo('daftar-mitra');
+            }
+          }} 
+          userRole={userRole} 
+        />
       )}
     </div>
   );
