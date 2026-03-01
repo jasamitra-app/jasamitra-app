@@ -1,3 +1,1433 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  Search, 
+  Handshake, 
+  ShieldCheck, 
+  Star, 
+  Clock, 
+  MapPin, 
+  ClipboardList, 
+  User, 
+  Home, 
+  Plus, 
+  LayoutGrid,
+  ChevronRight, 
+  ArrowLeft, 
+  Send, 
+  Image as ImageIcon, 
+  X, 
+  CheckCircle2, 
+  AlertTriangle,
+  LogOut,
+  Info,
+  FileText,
+  Copy,
+  Camera,
+  Building2,
+  Trash2,
+  PauseCircle,
+  PlayCircle,
+  Edit3,
+  Wrench,
+  MessageSquare
+} from 'lucide-react';
+import { 
+  CATEGORIES, 
+  SUB_CATEGORIES, 
+  SERVICES as INITIAL_SERVICES, 
+  CategoryId, 
+  Service, 
+  SubCategory 
+} from './constants';
+import { auth, db } from './lib/firebase';
+import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
+import { collection, query, onSnapshot, addDoc, serverTimestamp, getDocs, where } from 'firebase/firestore';
+
+// --- Types ---
+type Page = 'beranda' | 'pesan' | 'layanan' | 'akun' | 'login' | 'daftar-mitra' | 'kebijakan' | 'syarat-ketentuan' | 'edit-profil' | 'alamat-saya' | 'iklan-saya' | 'chat' | 'profil-mitra' | 'pesanan' | 'pesanan-pelanggan' | 'kaffa-cellular' | 'subkategori';
+
+interface ChatMessage {
+  id: string;
+  sender: 'user' | 'mitra';
+  type: 'text' | 'image';
+  content: string;
+  time: string;
+  isDeal?: boolean;
+  dealData?: any;
+}
+
+interface Order {
+  id: string;
+  title: string;
+  status: 'proses' | 'selesai' | 'batal';
+  price: string;
+  date: string;
+  technician: string;
+  progress: number;
+  update?: string;
+}
+
+// --- Components ---
+// --- Components ---
+
+const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
+  useEffect(() => {
+    const timer = setTimeout(onComplete, 2500);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gradient-to-br from-blue-900 to-blue-600 text-white"
+    >
+      <motion.div 
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="relative"
+      >
+        <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center border-4 border-white/30 shadow-2xl backdrop-blur-md">
+          <Handshake size={64} className="text-white" />
+        </div>
+        <motion.div 
+          animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="absolute -inset-4 border-2 border-white/20 rounded-full"
+        />
+      </motion.div>
+      
+      <motion.div 
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="mt-8 text-center"
+      >
+        <h1 className="text-4xl font-bold tracking-widest">
+          JASA<span className="text-amber-400">MITRA</span>
+        </h1>
+        <p className="text-sm opacity-90 mt-2 font-medium tracking-wide">Solusi Jasa Terpercaya</p>
+      </motion.div>
+
+      <div className="mt-12 flex flex-col items-center">
+        <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+        <p className="text-xs mt-4 opacity-70 font-medium">Memuat aplikasi...</p>
+      </div>
+
+      <div className="absolute bottom-12 text-center opacity-50">
+        <p className="text-[10px] font-bold">© 2026 PT JasaMitra Indonesia</p>
+        <p className="text-[10px] font-medium">Versi 1.0.0</p>
+      </div>
+    </motion.div>
+  );
+};
+
+const BottomNav = ({ activePage, onNav, onAdd }: { activePage: Page, onNav: (p: Page) => void, onAdd: () => void }) => {
+  const navItems = [
+    { id: 'beranda', label: 'Beranda', icon: Home },
+    { id: 'pesan', label: 'Pesan', icon: MessageSquare },
+    { id: 'add', label: '', icon: Plus, isSpecial: true },
+    { id: 'layanan', label: 'Progress', icon: LayoutGrid },
+    { id: 'akun', label: 'Akun', icon: User },
+  ];
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 glass h-20 flex items-center justify-around px-2 z-[1000] safe-bottom">
+      {navItems.map((item) => {
+        if (item.isSpecial) {
+          return (
+            <div key={item.id} className="relative -top-6">
+              <button 
+                onClick={onAdd}
+                className="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-amber-500/40 border-4 border-white neo-3d"
+              >
+                <Plus size={28} strokeWidth={3} />
+              </button>
+            </div>
+          );
+        }
+
+        const isActive = activePage === item.id;
+        const Icon = item.icon;
+
+        return (
+          <button 
+            key={item.id}
+            onClick={() => onNav(item.id as Page)}
+            className={`flex flex-col items-center justify-center flex-1 transition-colors duration-300 ${isActive ? 'text-primary' : 'text-slate-400'}`}
+          >
+            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+            <span className="text-[10px] mt-1 font-semibold">{item.label}</span>
+            {isActive && (
+              <motion.div 
+                layoutId="nav-indicator"
+                className="w-1 h-1 bg-primary rounded-full mt-1"
+              />
+            )}
+          </button>
+        );
+      })}
+    </nav>
+  );
+};
+
+const PageHeader = ({ title, subtitle, onBack }: { title: string, subtitle?: string, onBack?: () => void }) => (
+  <header className="bg-gradient-to-br from-blue-900 to-blue-700 text-white pt-6 pb-8 px-6 rounded-b-[32px] shadow-lg relative overflow-hidden">
+    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl" />
+    <div className="relative z-10 flex items-center gap-4">
+      {onBack && (
+        <button onClick={onBack} className="p-2 -ml-2 hover:bg-white/10 rounded-full transition-colors">
+          <ArrowLeft size={24} />
+        </button>
+      )}
+      <div className="flex-1 text-center pr-8">
+        <h1 className="text-lg font-bold tracking-tight">{title}</h1>
+        {subtitle && <p className="text-[9px] opacity-80 font-medium uppercase tracking-widest">{subtitle}</p>}
+      </div>
+    </div>
+  </header>
+);
+
+
+export default function App() {
+  const [isSplash, setIsSplash] = useState(true);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [services, setServices] = useState<Service[]>(INITIAL_SERVICES);
+  const [activePage, setActivePage] = useState<Page>('beranda');
+  const [prevPage, setPrevPage] = useState<Page | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCat, setSelectedCat] = useState<CategoryId>('all');
+  const [selectedSub, setSelectedSub] = useState<string>('all');
+  const [bookingService, setBookingService] = useState<Service | null>(null);
+  const [chatMitra, setChatMitra] = useState<{ id: string, name: string, serviceTitle?: string } | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [inputText, setInputText] = useState('');
+  const [showDealModal, setShowDealModal] = useState(false);
+  const [showAdModal, setShowAdModal] = useState(false);
+  const [showTrackingModal, setShowTrackingModal] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [activeDeal, setActiveDeal] = useState<any>(null);
+  const [selectedMitra, setSelectedMitra] = useState<any>(null);
+  const [experiences, setExperiences] = useState([{ id: 1, company: '', position: '', start: '', end: '', desc: '' }]);
+  const [adImage, setAdImage] = useState<string | null>(null);
+  const [isMitra, setIsMitra] = useState(false);
+  const [mitraOrders, setMitraOrders] = useState<any[]>([]);
+  const [kaffaForm, setKaffaForm] = useState({
+    nama: '',
+    wa: '',
+    jenis: 'Handphone',
+    model: '',
+    keluhan: ''
+  });
+  const [kaffaPhotos, setKaffaPhotos] = useState<string[]>([]);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [signupName, setSignupName] = useState('');
+
+  // Data Iklan (Mock dari HTML)
+  const [myAds, setMyAds] = useState<any[]>([]);
+
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const q = query(collection(db, 'services'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const servicesList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as any;
+      if (servicesList.length > 0) {
+        setServices(servicesList);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!chatMitra) {
+      setMessages([]);
+      return;
+    }
+    const q = query(
+      collection(db, 'chats', chatMitra.id, 'messages'),
+      import('firebase/firestore').then(f => f.orderBy('timestamp', 'asc')) as any
+    );
+    // Note: orderBy requires an index, for now just simple query
+    const simpleQ = query(collection(db, 'chats', chatMitra.id, 'messages'));
+    const unsubscribe = onSnapshot(simpleQ, (snapshot) => {
+      const msgs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as any;
+      // Sort manually if timestamp is available
+      msgs.sort((a: any, b: any) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
+      setMessages(msgs);
+    });
+    return () => unsubscribe();
+  }, [chatMitra]);
+
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  const filteredServices = services.filter(s => {
+    const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCat = selectedCat === 'all' || s.cat === selectedCat;
+    const matchesSub = selectedSub === 'all' || s.subcat === selectedSub;
+    return matchesSearch && matchesCat && matchesSub;
+  });
+
+  const handleLogin = async () => {
+    try {
+      const { signInWithEmailAndPassword } = await import('firebase/auth');
+      await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
+      alert('Berhasil masuk!');
+      navigateTo('beranda');
+    } catch (error: any) {
+      alert('Gagal masuk: ' + error.message);
+    }
+  };
+
+  const handleSignUp = async () => {
+    try {
+      const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
+      const userCredential = await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
+      await updateProfile(userCredential.user, { displayName: signupName });
+      alert('Pendaftaran berhasil! Silakan login.');
+      navigateTo('login');
+    } catch (error: any) {
+      alert('Pendaftaran gagal: ' + error.message);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      alert('Berhasil keluar');
+      navigateTo('beranda');
+    } catch (error: any) {
+      alert('Gagal keluar: ' + error.message);
+    }
+  };
+
+  const navigateTo = (page: Page) => {
+    setPrevPage(activePage);
+    setActivePage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBack = () => {
+    if (prevPage) {
+      setActivePage(prevPage);
+      setPrevPage(null);
+    } else {
+      setActivePage('beranda');
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAdImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const openMitraProfile = (service: Service) => {
+    setSelectedMitra({
+      id: service.id,
+      name: "Ahmad Fauzi",
+      foto: service.img,
+      lokasi: "Jakarta Selatan",
+      tentang: "Teknisi berpengalaman lebih dari 5 tahun dalam menangani berbagai perbaikan elektronik rumah tangga. Spesialisasi dalam servis AC, kulkas, dan mesin cuci. Memiliki sertifikasi resmi dari teknisi nasional.",
+      alamatLengkap: "Jl. Merpati No. 123, RT 01 RW 02, Kel. Pondok Labu, Kec. Cilandak, Jakarta Selatan 12450",
+      pengalaman: 5,
+      proyek: 127,
+      kepuasan: "98%",
+      rating: 4.9,
+      layanan: ["Servis AC", "Servis Kulkas", "Mesin Cuci", "Instalasi Listrik"]
+    });
+    navigateTo('profil-mitra');
+  };
+
+  const addExperience = () => {
+    setExperiences([...experiences, { id: experiences.length + 1, company: '', position: '', start: '', end: '', desc: '' }]);
+  };
+
+  const removeExperience = (id: number) => {
+    if (experiences.length > 1) {
+      setExperiences(experiences.filter(e => e.id !== id));
+    }
+  };
+  const openDealModal = () => {
+    const price = 1000000; // Contoh harga deal
+    const jaminan = price * 0.1;
+    setActiveDeal({
+      jasa: chatMitra?.serviceTitle || 'Servis AC',
+      mitra: chatMitra?.name || 'Mitra Jasa',
+      total: price,
+      jaminan: jaminan,
+      sisa: price - jaminan
+    });
+    setShowDealModal(true);
+  };
+
+  const confirmDeal = async () => {
+    if (!user || !activeDeal) return;
+
+    try {
+      const dealContent = `✅ DEAL DISEPAKATI\nTotal: Rp ${activeDeal.total.toLocaleString()}\nJaminan 10%: Rp ${activeDeal.jaminan.toLocaleString()}`;
+      
+      // Save to chat
+      await addDoc(collection(db, 'chats', chatMitra?.id || 'general', 'messages'), {
+        sender: 'user',
+        senderId: user.uid,
+        type: 'text',
+        content: dealContent,
+        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+        isDeal: true,
+        timestamp: serverTimestamp()
+      });
+
+      // Save to orders
+      await addDoc(collection(db, 'orders'), {
+        customerId: user.uid,
+        customerName: user.displayName || 'Pengguna JasaMitra',
+        mitraId: chatMitra?.id,
+        mitraName: chatMitra?.name,
+        serviceTitle: activeDeal.jasa,
+        totalPrice: activeDeal.total,
+        jaminan: activeDeal.jaminan,
+        status: 'pending',
+        date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+        timestamp: serverTimestamp()
+      });
+
+      setShowDealModal(false);
+      alert('Pembayaran jaminan dikonfirmasi! Pesanan telah dikirim ke mitra.');
+    } catch (error: any) {
+      alert('Gagal mengonfirmasi deal: ' + error.message);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!inputText.trim() || !user) {
+      if (!user) alert('Silakan login untuk mengirim pesan');
+      return;
+    }
+    
+    // Sensor WA logic
+    const polaWA = /(\+?62|0)8[1-9][0-9]{6,10}/g;
+    let content = inputText.replace(polaWA, '🔴 [NOMOR DILARANG]');
+    if (/wa|whatsapp|hp|telp|kontak/i.test(content)) {
+      content += '\n\n⚠️ DILARANG SHARE KONTAK!';
+    }
+
+    try {
+      await addDoc(collection(db, 'chats', chatMitra?.id || 'general', 'messages'), {
+        sender: 'user',
+        senderId: user.uid,
+        type: 'text',
+        content: content,
+        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+        timestamp: serverTimestamp()
+      });
+      setInputText('');
+      if (inputText !== content) alert('⚠️ Dilarang berbagi nomor WA! Pesan telah disensor.');
+    } catch (error: any) {
+      alert('Gagal mengirim pesan: ' + error.message);
+    }
+  };
+
+  if (isSplash) return <SplashScreen onComplete={() => setIsSplash(false)} />;
+
+  return (
+    <div className="min-h-screen pb-24">
+      <AnimatePresence mode="wait">
+        
+        {/* --- BERANDA --- */}
+        {activePage === 'beranda' && (
+          <motion.div 
+            key="beranda"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            className="flex flex-col"
+          >
+            <header className="bg-gradient-to-br from-blue-900 to-blue-700 text-white pt-8 pb-10 px-6 rounded-b-[32px] shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl" />
+              <div className="relative z-10">
+                <div className="flex justify-between items-center mb-4">
+                  <h1 className="text-xl font-bold tracking-tight">JASA<span className="text-amber-400">MITRA</span></h1>
+                  <div className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-md border border-white/20">
+                    <User size={18} />
+                  </div>
+                </div>
+                <p className="text-xs opacity-80 mb-4 font-medium">Ribuan mitra tenaga ahli berpengalaman siap melayani Anda</p>
+                
+                <div className="relative group">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={18} />
+                  <input 
+                    type="text" 
+                    placeholder="Cari jasa servis..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-white text-slate-900 py-3.5 pl-12 pr-4 rounded-2xl shadow-2xl outline-none focus:ring-4 ring-primary/20 transition-all font-medium text-sm"
+                  />
+                </div>
+              </div>
+            </header>
+
+            <main className="px-6 -mt-6 relative z-20">
+              {/* Security Banner */}
+              <motion.div 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-2xl shadow-lg flex gap-4 mb-8"
+              >
+                <div className="bg-amber-100 p-2 rounded-xl h-fit">
+                  <ShieldCheck className="text-amber-600" size={24} />
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-1">Jaminan Keamanan Customer</h4>
+                  <p className="text-[10px] text-amber-700 leading-relaxed font-medium">
+                    Semua mitra telah melalui proses verifikasi penuh mencakup KTP, SKCK, serta validasi rekening bank untuk memastikan identitas dan keamanan transaksi.
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* Categories */}
+              <section className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-slate-800">Kategori Layanan</h2>
+                  <button className="text-xs font-bold text-primary uppercase tracking-widest">Lihat Semua</button>
+                </div>
+                <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
+                  {CATEGORIES.map((cat) => (
+                    <button 
+                      key={cat.id}
+                      onClick={() => {
+                        setSelectedCat(cat.id);
+                        setSelectedSub('all');
+                        navigateTo('subkategori');
+                      }}
+                      className="flex flex-col items-center gap-2 min-w-[80px]"
+                    >
+                      <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${cat.color} flex items-center justify-center text-white shadow-lg neo-3d ${selectedCat === cat.id ? 'ring-4 ring-primary/30 scale-110' : 'opacity-90'}`}>
+                        <cat.icon size={28} />
+                      </div>
+                      <span className={`text-[11px] font-bold ${selectedCat === cat.id ? 'text-primary' : 'text-slate-500'}`}>{cat.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* Banners Toko */}
+              <section className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-slate-800">Toko Mitra</h2>
+                  <button className="text-xs font-bold text-primary uppercase tracking-widest">Lihat Semua</button>
+                </div>
+                <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-6 px-6">
+                  {[
+                    { id: 1, name: 'Toko Besi', img: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200', desc: 'Baja & Konstruksi' },
+                    { id: 2, name: 'Keramik', img: 'https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?w=200', desc: 'Lantai & Dinding' },
+                    { id: 3, name: 'Toko Vinyl', img: 'https://images.unsplash.com/photo-1581850518616-bcb8186c3f30?w=200', desc: 'Lantai Modern' },
+                    { id: 5, name: 'Nippon Paint', img: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=200', desc: 'Solusi Cat & Warna' },
+                  ].map((toko) => (
+                    <motion.div 
+                      key={toko.id} 
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        alert(`Halaman ${toko.name} dalam pengembangan`);
+                      }}
+                      className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 neo-3d cursor-pointer min-w-[140px] max-w-[140px]"
+                    >
+                      <img src={toko.img} className="w-full h-24 object-cover" alt={toko.name} referrerPolicy="no-referrer" />
+                      <div className="p-3">
+                        <h3 className="text-[10px] font-bold text-slate-800 truncate">{toko.name}</h3>
+                        <p className="text-[8px] text-slate-400 font-bold uppercase tracking-tighter">{toko.desc}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Rekomendasi Mitra (Subscription) */}
+              <section className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-slate-800">Rekomendasi Mitra</h2>
+                    <span className="bg-amber-100 text-amber-700 text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider border border-amber-200">Pro</span>
+                  </div>
+                  <button className="text-xs font-bold text-primary uppercase tracking-widest">Lihat Semua</button>
+                </div>
+                <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-6 px-6">
+                  {[
+                    { id: 4, name: 'Kaffa Cellular', img: 'https://i.ibb.co.com/zWJ6DwYx/images-6.webp', desc: 'Gadget Solution', rating: 5.0 },
+                    { id: 102, name: 'Siti Clean', img: 'https://images.unsplash.com/photo-1581578731548-c64695cc6958?w=200', desc: 'Jasa Kebersihan Total', rating: 4.8 },
+                    { id: 103, name: 'Aris Bangun', img: 'https://images.unsplash.com/photo-1503387762-592dec5832f2?w=200', desc: 'Renovasi & Bangun Rumah', rating: 5.0 },
+                    { id: 104, name: 'Dewi Tailor', img: 'https://images.unsplash.com/photo-1552330892-344c53c33f5d?w=200', desc: 'Jahit & Permak Busana', rating: 4.7 },
+                    { id: 105, name: 'Jaya Service', img: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=200', desc: 'Servis Elektronik & HP', rating: 4.9 },
+                  ].map((mitra) => (
+                    <motion.div 
+                      key={mitra.id} 
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        if (mitra.id === 4) {
+                          navigateTo('kaffa-cellular');
+                        } else {
+                          alert(`Detail ${mitra.name} akan segera hadir`);
+                        }
+                      }}
+                      className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 neo-3d cursor-pointer min-w-[160px] max-w-[160px] relative"
+                    >
+                      <div className="absolute top-2 right-2 z-10 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-lg flex items-center gap-0.5 shadow-sm">
+                        <Star size={8} className="text-amber-500 fill-amber-500" />
+                        <span className="text-[8px] font-bold text-slate-700">{mitra.rating}</span>
+                      </div>
+                      <img src={mitra.img} className="w-full h-28 object-cover" alt={mitra.name} referrerPolicy="no-referrer" />
+                      <div className="p-3">
+                        <h3 className="text-[11px] font-bold text-slate-800 truncate">{mitra.name}</h3>
+                        <p className="text-[9px] text-slate-400 font-medium line-clamp-1">{mitra.desc}</p>
+                        <div className="mt-2 flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                          <span className="text-[8px] font-bold text-emerald-600 uppercase tracking-tighter">Tersedia Sekarang</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Home Service List (Recommendations Only) */}
+              <section className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-slate-800">Rekomendasi Untukmu</h2>
+                </div>
+                <div className="space-y-4">
+                  {services.slice(0, 5).map((service) => (
+                    <motion.div 
+                      key={service.id}
+                      whileTap={{ scale: 0.98 }}
+                      className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex gap-4 neo-3d cursor-pointer"
+                      onClick={() => openMitraProfile(service)}
+                    >
+                      <img 
+                        src={service.img} 
+                        alt={service.title}
+                        className="w-20 h-20 rounded-2xl object-cover shadow-inner"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-800 line-clamp-1">{service.title}</h3>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Star size={12} className="text-amber-400 fill-amber-400" />
+                            <span className="text-[10px] font-bold text-slate-600">{service.rating}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-sm font-extrabold text-primary">{service.price}</span>
+                          <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Detail</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </section>
+            </main>
+          </motion.div>
+        )}
+
+        {/* --- PESAN (CHAT LIST) --- */}
+        {activePage === 'pesan' && (
+          <motion.div key="pesan" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <PageHeader title="Pesan" subtitle="Percakapan dengan mitra & pelanggan" />
+            <main className="px-6 -mt-4 space-y-3 pb-24">
+              {[
+                { id: '1', name: 'Ahmad Fauzi', lastMsg: 'Baik pak, saya meluncur ke lokasi sekarang.', time: '10:30', unread: 2, avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100', status: 'online' },
+                { id: '2', name: 'Budi Santoso', lastMsg: 'Terima kasih atas jasanya, sangat memuaskan!', time: 'Kemarin', unread: 0, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100', status: 'offline' },
+                { id: '3', name: 'Siti Aminah', lastMsg: 'Apakah bisa servis mesin cuci besok pagi?', time: 'Senin', unread: 0, avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100', status: 'online' },
+                { id: '4', name: 'Toko Material Jaya', lastMsg: 'Stok keramik putih ready banyak pak.', time: '22 Feb', unread: 1, avatar: 'https://images.unsplash.com/photo-1581850518616-bcb8186c3f30?w=100', status: 'offline' },
+              ].map((chat) => (
+                <button 
+                  key={chat.id}
+                  onClick={() => {
+                    setChatMitra({ id: chat.id, name: chat.name });
+                    navigateTo('chat');
+                  }}
+                  className="w-full bg-white p-4 rounded-[32px] shadow-sm border border-slate-100 flex items-center gap-4 active:scale-[0.98] transition-all neo-3d"
+                >
+                  <div className="relative shrink-0">
+                    <img src={chat.avatar} className="w-14 h-14 rounded-2xl object-cover shadow-inner" alt={chat.name} />
+                    {chat.status === 'online' && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full" />
+                    )}
+                  </div>
+                  <div className="flex-1 text-left min-w-0">
+                    <div className="flex justify-between items-center mb-1">
+                      <h3 className="text-sm font-bold text-slate-800 truncate">{chat.name}</h3>
+                      <span className="text-[10px] font-bold text-slate-400">{chat.time}</span>
+                    </div>
+                    <p className={`text-xs truncate ${chat.unread > 0 ? 'text-slate-800 font-bold' : 'text-slate-400 font-medium'}`}>
+                      {chat.lastMsg}
+                    </p>
+                  </div>
+                  {chat.unread > 0 && (
+                    <div className="w-5 h-5 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg shadow-primary/30">
+                      {chat.unread}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </main>
+          </motion.div>
+        )}
+
+        {/* --- EDIT PROFIL --- */}
+        {activePage === 'edit-profil' && (
+          <motion.div key="edit-profil" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <PageHeader title="Edit Profil" subtitle="Perbarui data diri Anda" onBack={handleBack} />
+            <main className="px-6 -mt-4 space-y-6">
+              <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 text-center neo-3d">
+                <div className="relative w-24 h-24 mx-auto mb-4">
+                  <img src="https://ui-avatars.com/api/?name=Jasa+Mitra&background=2563eb&color=fff&size=100" className="w-full h-full rounded-full border-4 border-white shadow-lg object-cover" />
+                  <button className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg"><Camera size={16} /></button>
+                </div>
+                <div className="bg-slate-50 p-3 rounded-2xl flex items-center justify-between">
+                  <div className="text-left">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">No. Member Mitra</p>
+                    <p className="text-xs font-bold text-slate-700">MIT-2024-001234</p>
+                  </div>
+                  <button className="p-2 text-primary"><Copy size={16} /></button>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100 space-y-4">
+                <h3 className="text-sm font-bold text-primary flex items-center gap-2"><User size={18} /> Data Pribadi</h3>
+                <div className="space-y-4">
+                  <input type="text" defaultValue="Ahmad Fauzi" className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none" placeholder="Nama Lengkap" />
+                  <input type="email" defaultValue="ahmad.fauzi@email.com" className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none" placeholder="Email" />
+                  <input type="tel" defaultValue="08123456789" className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none" placeholder="Nomor HP" />
+                </div>
+                <h3 className="text-sm font-bold text-primary flex items-center gap-2 mt-6"><Wrench size={18} /> Bidang Keahlian</h3>
+                <div className="flex flex-wrap gap-2">
+                  {['Servis AC', 'Servis Kulkas', 'Instalasi Listrik', 'Servis TV'].map(k => (
+                    <span key={k} className="bg-blue-50 text-primary text-[10px] font-bold px-3 py-1.5 rounded-full">{k}</span>
+                  ))}
+                </div>
+                <button onClick={() => {alert('Profil disimpan!'); navigateTo('akun');}} className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-primary/30 mt-4">Simpan Perubahan</button>
+              </div>
+            </main>
+          </motion.div>
+        )}
+
+        {/* --- ALAMAT SAYA --- */}
+        {activePage === 'alamat-saya' && (
+          <motion.div key="alamat-saya" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <PageHeader title="Alamat Saya" subtitle="Kelola alamat pengiriman" onBack={handleBack} />
+            <main className="px-6 -mt-4 space-y-4">
+              <div className="bg-white p-6 rounded-[40px] shadow-sm border-l-8 border-primary neo-3d">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="bg-blue-50 text-primary text-[9px] font-extrabold px-2 py-1 rounded-full uppercase tracking-widest">Alamat Utama</span>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-primary"><Home size={24} /></div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-bold text-slate-800">Alamat Rumah</h4>
+                    <p className="text-[11px] text-slate-500 leading-relaxed mt-1">Jl. Merpati No. 123, RT 01 RW 02, Kel. Contoh, Kec. Contoh, Jakarta Selatan 12345</p>
+                  </div>
+                </div>
+                <div className="flex gap-3 mt-6 pt-6 border-t border-slate-50">
+                  <button className="flex-1 bg-slate-50 text-slate-600 py-3 rounded-xl font-bold text-[10px]">EDIT ALAMAT</button>
+                  <button className="flex-1 bg-slate-50 text-slate-600 py-3 rounded-xl font-bold text-[10px]">LIHAT PETA</button>
+                </div>
+              </div>
+              <button className="w-full py-6 border-2 border-dashed border-slate-200 rounded-[40px] text-slate-400 font-bold text-xs flex items-center justify-center gap-2"><Plus size={20} /> Tambah Alamat Lain</button>
+            </main>
+          </motion.div>
+        )}
+
+        {/* --- IKLAN SAYA --- */}
+        {activePage === 'iklan-saya' && (
+          <motion.div key="iklan-saya" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <PageHeader title="Iklan Saya" subtitle="Kelola iklan jasa Anda" onBack={handleBack} />
+            <main className="px-6 -mt-4 space-y-6">
+              <div className="space-y-4">
+                {myAds.map(ad => (
+                  <div key={ad.id} className={`bg-white p-4 rounded-[32px] shadow-sm border border-slate-100 neo-3d ${ad.status === 'nonaktif' ? 'opacity-60 grayscale' : ''}`}>
+                    <div className="flex gap-4">
+                      <img src={ad.img} className="w-20 h-20 rounded-2xl object-cover shadow-inner" />
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <h3 className="text-sm font-bold text-slate-800">{ad.title}</h3>
+                          <span className={`text-[8px] font-extrabold px-2 py-1 rounded-full uppercase tracking-widest ${ad.status === 'aktif' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>{ad.status}</span>
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-400 mt-1">{ad.cat}</p>
+                        <p className="text-xs font-extrabold text-primary mt-2">{ad.price}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-4 pt-4 border-t border-slate-50">
+                      <button className="flex-1 bg-blue-50 text-primary p-2 rounded-xl"><Edit3 size={16} className="mx-auto" /></button>
+                      <button className="flex-1 bg-amber-50 text-amber-600 p-2 rounded-xl"><PauseCircle size={16} className="mx-auto" /></button>
+                      <button className="flex-1 bg-rose-50 text-rose-600 p-2 rounded-xl"><Trash2 size={16} className="mx-auto" /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </main>
+          </motion.div>
+        )}
+
+        {/* --- LAYANAN (PROGRESS) --- */}
+        {activePage === 'layanan' && (
+          <motion.div 
+            key="layanan"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.05 }}
+          >
+            <PageHeader title="Progress Pekerjaan" subtitle="Pantau status layanan secara real-time" />
+            <main className="px-6 -mt-4">
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col gap-1">
+                  <span className="text-3xl font-extrabold text-primary">3</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aktif</span>
+                </div>
+                <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col gap-1">
+                  <span className="text-3xl font-extrabold text-emerald-500">12</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Selesai</span>
+                </div>
+              </div>
+
+              {/* Filter Status */}
+              <div className="flex gap-3 overflow-x-auto pb-4 mb-4 hide-scrollbar">
+                {['Semua', 'Dalam Proses', 'Selesai', 'Dibatalkan'].map((f, i) => (
+                  <button 
+                    key={f}
+                    className={`px-5 py-2.5 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${i === 0 ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white text-slate-500 border border-slate-100'}`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-white p-5 rounded-3xl shadow-sm border-l-8 border-blue-500 neo-3d">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-800">Perbaikan Korsleting Listrik</h3>
+                      <p className="text-[10px] font-medium text-slate-400 mt-1">Teknisi: Budi Santoso</p>
+                    </div>
+                    <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-3 py-1 rounded-full">Dikerjakan</span>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <div className="flex justify-between text-[10px] font-bold text-slate-500 mb-2">
+                      <span>Progress</span>
+                      <span>60%</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: '60%' }}
+                        className="h-full bg-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 p-3 rounded-2xl mb-4 flex gap-3 items-center">
+                    <Info size={16} className="text-blue-500" />
+                    <p className="text-[10px] font-medium text-slate-600">Teknisi sedang mengganti kabel yang terbakar</p>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <div className="flex gap-4">
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
+                        <Clock size={12} /> 45m
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
+                        <MapPin size={12} /> Jakarta
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setShowTrackingModal(true)}
+                      className="bg-primary/10 text-primary text-[10px] font-bold px-4 py-2 rounded-xl active:scale-95 transition-transform"
+                    >
+                      Lacak
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-white p-5 rounded-3xl shadow-sm border-l-8 border-emerald-500 neo-3d opacity-80">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-800">Pasang CCTV 4 Camera</h3>
+                      <p className="text-[10px] font-medium text-slate-400 mt-1">Teknisi: Hendra Wijaya</p>
+                    </div>
+                    <span className="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-3 py-1 rounded-full">Selesai</span>
+                  </div>
+                  <div className="flex items-center gap-1 mb-4">
+                    {[1,2,3,4,5].map(s => <Star key={s} size={12} className="text-amber-400 fill-amber-400" />)}
+                    <span className="text-[10px] font-bold text-slate-400 ml-2">5.0 | 12 Feb 2026</span>
+                  </div>
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={() => navigateTo('beranda')}
+                      className="flex-1 bg-primary text-white py-3 rounded-xl font-bold text-[10px] active:scale-95 transition-transform"
+                    >
+                      PESAN LAGI
+                    </button>
+                    <button 
+                      onClick={() => setShowReviewModal(true)}
+                      className="flex-1 bg-white border border-slate-100 text-slate-500 py-3 rounded-xl font-bold text-[10px] active:scale-95 transition-transform"
+                    >
+                      BERI ULASAN
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </main>
+          </motion.div>
+        )}
+
+        {/* --- AKUN --- */}
+        {activePage === 'akun' && (
+          <motion.div 
+            key="akun"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <PageHeader title="Akun Saya" subtitle="Kelola profil dan preferensi Anda" />
+            <main className="px-6 -mt-4">
+              <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 text-center mb-8 neo-3d">
+                <div className="w-24 h-24 bg-slate-100 rounded-full mx-auto mb-4 flex items-center justify-center text-slate-300 border-4 border-white shadow-lg overflow-hidden">
+                  {user?.photoURL ? (
+                    <img src={user.photoURL} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  ) : (
+                    <User size={48} />
+                  )}
+                </div>
+                <h3 className="text-lg font-bold text-slate-800">{user?.displayName || 'Pengguna JasaMitra'}</h3>
+                <p className="text-xs text-slate-400 font-medium mb-6">{user?.email || 'Belum login'}</p>
+                {!user && (
+                  <button 
+                    onClick={() => navigateTo('login')}
+                    className="bg-primary text-white text-xs font-bold px-8 py-3 rounded-2xl shadow-lg shadow-primary/30 active:scale-95 transition-transform"
+                  >
+                    Login
+                  </button>
+                )}
+              </div>
+
+              <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden mb-8">
+                {[
+                  { id: 'daftar-mitra', label: 'Daftar Menjadi Mitra', icon: Wrench, color: 'text-amber-500', bg: 'bg-amber-50', isSpecial: true, hide: isMitra },
+                  { id: 'pesanan-pelanggan', label: 'Pesanan Saya (Pelanggan)', icon: ClipboardList, color: 'text-slate-600', bg: 'bg-slate-50' },
+                  { id: 'pesanan', label: 'Pesanan Masuk (Mitra)', icon: Handshake, color: 'text-blue-600', bg: 'bg-blue-50' },
+                  { id: 'edit-profil', label: 'Edit Profil', icon: Edit3, color: 'text-slate-600', bg: 'bg-slate-50' },
+                  { id: 'alamat-saya', label: 'Alamat Saya', icon: MapPin, color: 'text-slate-600', bg: 'bg-slate-50' },
+                  { id: 'iklan-saya', label: 'Iklan Saya', icon: ClipboardList, color: 'text-slate-600', bg: 'bg-slate-50' },
+                  { id: 'kebijakan', label: 'Kebijakan Privasi & Keamanan', icon: ShieldCheck, color: 'text-slate-500', bg: 'bg-slate-50' },
+                  { id: 'syarat-ketentuan', label: 'Syarat & Ketentuan', icon: FileText, color: 'text-slate-500', bg: 'bg-slate-50' },
+                ].filter(item => !item.hide).map((item) => (
+                  <button 
+                    key={item.id}
+                    onClick={() => navigateTo(item.id as Page)}
+                    className="w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 ${item.bg} rounded-xl flex items-center justify-center ${item.color}`}>
+                        <item.icon size={20} />
+                      </div>
+                      <span className={`text-sm font-bold ${item.isSpecial ? 'text-amber-600' : 'text-slate-700'}`}>{item.label}</span>
+                    </div>
+                    <ChevronRight size={18} className="text-slate-300" />
+                  </button>
+                ))}
+              </div>
+
+              {user && (
+                <button 
+                  onClick={handleLogout}
+                  className="w-full p-5 bg-rose-50 text-rose-600 rounded-[30px] font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                >
+                  <LogOut size={20} /> Keluar
+                </button>
+              )}
+            </main>
+          </motion.div>
+        )}
+
+        {/* --- CHAT --- */}
+        {activePage === 'chat' && (
+          <motion.div 
+            key="chat"
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100 }}
+            className="fixed inset-0 z-[2000] bg-slate-50 flex flex-col"
+          >
+            <header className="bg-primary text-white p-5 pt-8 flex items-center gap-4 shadow-lg">
+              <button onClick={handleBack} className="p-2 -ml-2 hover:bg-white/10 rounded-full">
+                <ArrowLeft size={24} />
+              </button>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold">Chat dengan Mitra</h2>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                  <span className="text-[10px] font-bold opacity-80 uppercase tracking-widest">Online</span>
+                </div>
+              </div>
+              <button onClick={openDealModal} className="bg-white/20 p-2 rounded-xl border border-white/20"><Handshake size={20} /></button>
+            </header>
+
+            <main className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-2xl text-[11px] text-amber-800 font-medium leading-relaxed">
+                <AlertTriangle size={16} className="inline mr-2 -mt-1" />
+                Jaga keamanan bersama! Semua komunikasi wajib melalui chat internal. Dilarang berbagi nomor WhatsApp atau kontak pribadi lainnya.
+              </div>
+
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full opacity-30">
+                  <Handshake size={64} className="mb-4" />
+                  <p className="text-sm font-bold">Belum ada pesan</p>
+                </div>
+              ) : (
+                messages.map((m) => (
+                  <div key={m.id} className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                    <div className={`max-w-[80%] p-4 rounded-[24px] text-sm font-medium shadow-sm ${m.sender === 'user' ? 'bg-primary text-white rounded-br-none' : 'bg-white text-slate-800 rounded-bl-none'}`}>
+                      {m.content}
+                    </div>
+                    <span className="text-[9px] font-bold text-slate-400 mt-1 px-2">{m.time}</span>
+                  </div>
+                ))
+              )}
+              <div ref={chatEndRef} />
+            </main>
+
+            <footer className="bg-white p-4 border-t border-slate-100 flex items-end gap-3 safe-bottom">
+              <button className="w-12 h-12 bg-slate-50 text-slate-400 rounded-2xl flex items-center justify-center active:scale-90 transition-transform">
+                <ImageIcon size={20} />
+              </button>
+              <textarea 
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="Ketik pesan..."
+                className="flex-1 bg-slate-50 border-none rounded-2xl p-3 text-sm font-medium outline-none focus:ring-2 ring-primary/20 transition-all resize-none max-h-32"
+                rows={1}
+              />
+              <button 
+                onClick={sendMessage}
+                disabled={!inputText.trim()}
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${inputText.trim() ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-slate-100 text-slate-300'}`}
+              >
+                <Send size={20} />
+              </button>
+            </footer>
+          </motion.div>
+        )}
+
+        {/* --- SUBKATEGORI & POSTINGAN --- */}
+        {activePage === 'subkategori' && (
+          <motion.div key="subkategori" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <PageHeader 
+              title={CATEGORIES.find(c => c.id === selectedCat)?.name || 'Layanan'} 
+              subtitle={`Temukan jasa ${selectedCat} terbaik`} 
+              onBack={handleBack} 
+            />
+            <main className="px-6 -mt-4 pb-24">
+              {/* Subcategory Filters */}
+              {selectedCat !== 'all' && SUB_CATEGORIES[selectedCat] && (
+                <section className="mb-8">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-1 h-6 bg-primary rounded-full" />
+                    <h2 className="text-sm font-bold text-slate-700">Pilih Subkategori</h2>
+                  </div>
+                  <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
+                    <button 
+                      onClick={() => setSelectedSub('all')}
+                      className={`px-6 py-3 rounded-2xl flex items-center gap-2 transition-all border-2 whitespace-nowrap font-bold text-xs ${selectedSub === 'all' ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-white border-slate-100 text-slate-500 shadow-sm'}`}
+                    >
+                      <LayoutGrid size={16} />
+                      Semua
+                    </button>
+                    {SUB_CATEGORIES[selectedCat].map((sub) => (
+                      <button 
+                        key={sub.id}
+                        onClick={() => setSelectedSub(sub.id)}
+                        className={`px-6 py-3 rounded-2xl flex items-center gap-2 transition-all border-2 whitespace-nowrap font-bold text-xs ${selectedSub === sub.id ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-white border-slate-100 text-slate-500 shadow-sm'}`}
+                      >
+                        <sub.icon size={16} />
+                        {sub.nama}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Service List */}
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-slate-800">
+                    Daftar Jasa {selectedSub === 'all' ? '' : SUB_CATEGORIES[selectedCat]?.find(s => s.id === selectedSub)?.nama}
+                  </h2>
+                </div>
+                <div className="space-y-4">
+                  {filteredServices.length > 0 ? (
+                    filteredServices.map((service) => (
+                      <motion.div 
+                        key={service.id}
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex gap-4 neo-3d"
+                      >
+                        <img 
+                          src={service.img} 
+                          alt={service.title}
+                          className="w-24 h-24 rounded-2xl object-cover shadow-inner"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="flex-1 flex flex-col justify-between">
+                          <div onClick={() => openMitraProfile(service)} className="cursor-pointer">
+                            <h3 className="text-sm font-bold text-slate-800 line-clamp-1">{service.title}</h3>
+                            <div className="flex items-center gap-1 mt-1">
+                              <Star size={12} className="text-amber-400 fill-amber-400" />
+                              <span className="text-[10px] font-bold text-slate-600">{service.rating}</span>
+                              <span className="text-[10px] text-slate-400 font-medium">({service.reviews} ulasan)</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-sm font-extrabold text-primary">{service.price}</span>
+                            <button 
+                              onClick={() => setBookingService(service)}
+                              className="bg-primary text-white text-[10px] font-bold px-4 py-2 rounded-xl shadow-lg shadow-primary/20 active:scale-95 transition-transform"
+                            >
+                              PESAN
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12 bg-slate-50 rounded-[40px] border-2 border-dashed border-slate-200">
+                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                        <Search size={24} className="text-slate-300" />
+                      </div>
+                      <p className="text-sm text-slate-400 font-bold">Belum ada jasa tersedia</p>
+                      <p className="text-xs text-slate-300 mt-1">Coba pilih subkategori lainnya</p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            </main>
+          </motion.div>
+        )}
+
+        {/* --- KAFFA CELLULAR --- */}
+        {activePage === 'kaffa-cellular' && (
+          <motion.div key="kaffa-cellular" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <PageHeader title="Kaffa Cellular" subtitle="Gadget Solution" onBack={handleBack} />
+            <main className="px-6 -mt-4 pb-24 space-y-6">
+              {/* Info Toko */}
+              <div className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100 space-y-4 neo-3d">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center overflow-hidden shadow-inner">
+                    <img src="https://i.ibb.co.com/zWJ6DwYx/images-6.webp" className="w-full h-full object-cover" alt="Kaffa Cellular" referrerPolicy="no-referrer" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-800">Kaffa Cellular</h3>
+                    <div className="flex items-center gap-1.5 text-emerald-600">
+                      <Clock size={14} />
+                      <span className="text-[11px] font-bold uppercase tracking-wider">Buka 12:00 - 24:00</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Alamat Lengkap</p>
+                  <p className="text-xs text-slate-600 font-medium leading-relaxed bg-slate-50 p-4 rounded-2xl">
+                    Jalan Sukasugih Jl. Sederhana No.20, Pasteur, Kec. Sukajadi, Kota Bandung, Jawa Barat 40161
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => window.open('https://www.google.com/maps/search/?api=1&query=Kaffa+Cellular+Bandung', '_blank')}
+                    className="flex-1 bg-slate-50 text-slate-700 py-3.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                  >
+                    <MapPin size={16} /> Buka Maps
+                  </button>
+                  <button 
+                    onClick={() => window.location.href = 'tel:082240998081'}
+                    className="flex-1 bg-primary/10 text-primary py-3.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                  >
+                    <Send size={16} /> Hubungi
+                  </button>
+                </div>
+              </div>
+
+              {/* Form Servis */}
+              <div className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100 space-y-6 neo-3d">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-1 h-5 bg-primary rounded-full" />
+                  <h3 className="text-sm font-bold text-slate-800">Form Permintaan Servis</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Nama Lengkap <span className="text-rose-500">*</span></label>
+                    <input 
+                      type="text" 
+                      placeholder="Nama Anda" 
+                      value={kaffaForm.nama}
+                      onChange={(e) => setKaffaForm({...kaffaForm, nama: e.target.value})}
+                      className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">No. WhatsApp <span className="text-rose-500">*</span></label>
+                    <input 
+                      type="tel" 
+                      placeholder="Contoh: 081234567890" 
+                      value={kaffaForm.wa}
+                      onChange={(e) => setKaffaForm({...kaffaForm, wa: e.target.value})}
+                      className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Jenis Gadget <span className="text-rose-500">*</span></label>
+                    <select 
+                      value={kaffaForm.jenis}
+                      onChange={(e) => setKaffaForm({...kaffaForm, jenis: e.target.value})}
+                      className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none appearance-none"
+                    >
+                      {['Handphone', 'Tablet'].map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Merk / Model</label>
+                    <input 
+                      type="text" 
+                      placeholder="Contoh: iPhone 13 Pro" 
+                      value={kaffaForm.model}
+                      onChange={(e) => setKaffaForm({...kaffaForm, model: e.target.value})}
+                      className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Keluhan Kerusakan <span className="text-rose-500">*</span></label>
+                    <textarea 
+                      placeholder="Jelaskan kendala gadget Anda..." 
+                      value={kaffaForm.keluhan}
+                      onChange={(e) => setKaffaForm({...kaffaForm, keluhan: e.target.value})}
+                      className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20 min-h-[100px] resize-none" 
+                    />
+                  </div>
+
+                  {/* Upload Foto */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Foto Gadget (Maks 3)</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[0, 1, 2].map((idx) => (
+                        <div 
+                          key={idx}
+                          onClick={() => idx === kaffaPhotos.length && document.getElementById('kaffa-photo-upload')?.click()}
+                          className={`aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-1 transition-all overflow-hidden ${
+                            kaffaPhotos[idx] ? 'border-primary/50 bg-white' : 'border-slate-200 bg-slate-50'
+                          } ${idx === kaffaPhotos.length ? 'cursor-pointer hover:border-primary/30' : ''}`}
+                        >
+                          {kaffaPhotos[idx] ? (
+                            <img src={kaffaPhotos[idx]} className="w-full h-full object-cover" />
+                          ) : (
+                            <>
+                              <Camera size={20} className="text-slate-300" />
+                              <span className="text-[8px] font-bold text-slate-400 uppercase">Upload</span>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <input 
+                      id="kaffa-photo-upload"
+                      type="file" 
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file && kaffaPhotos.length < 3) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setKaffaPhotos([...kaffaPhotos, reader.result as string]);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    {kaffaPhotos.length > 0 && (
+                      <button 
+                        onClick={() => setKaffaPhotos([])}
+                        className="text-[9px] font-bold text-rose-500 uppercase tracking-widest ml-2 mt-1"
+                      >
+                        Hapus Semua Foto
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => {
+                    if (!kaffaForm.nama || !kaffaForm.wa || !kaffaForm.keluhan) {
+                      alert('Mohon lengkapi data yang wajib diisi (*)');
+                      return;
+                    }
+                    if (kaffaForm.wa.length < 10 || kaffaForm.wa.length > 13) {
+                      alert('Nomor WhatsApp harus antara 10-13 digit');
+                      return;
+                    }
+
+                    const message = `Halo Kaffa Cellular,\n\nSaya ingin mengajukan servis gadget:\n\nNama: ${kaffaForm.nama}\nNo. WA: ${kaffaForm.wa}\nJenis: ${kaffaForm.jenis}\nMerk/Model: ${kaffaForm.model || '-'}\nKeluhan: ${kaffaForm.keluhan}\n\nTerima kasih.`;
+                    const encodedMsg = encodeURIComponent(message);
+                    window.open(`https://wa.me/6282240998081?text=${encodedMsg}`, '_blank');
+                  }}
+                  className="w-full bg-primary text-white py-5 rounded-[30px] font-bold text-sm shadow-xl shadow-primary/30 mt-4 active:scale-95 transition-transform flex items-center justify-center gap-2"
+                >
+                  <Send size={18} /> Kirim Permintaan
+                </button>
+              </div>
+            </main>
+          </motion.div>
+        )}
+
+        {/* --- PESANAN & BOOKING (PELANGGAN) --- */}
+        {activePage === 'pesanan-pelanggan' && (
+          <motion.div key="pesanan-pelanggan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <PageHeader title="Pesanan & Booking" subtitle="Kelola transaksi Anda" onBack={handleBack} />
+            <main className="bg-white min-h-screen">
+              {[
+                { id: 'paket', title: 'Beli Paket', desc: 'Jual lebih cepat, untung lebih banyak dengan Paket Bisnis', badge: 'Baru' },
+                { id: 'booking', title: 'Booking', desc: 'Lihat daftar produk yang dibooking' },
+                { id: 'pesanan', title: 'Pesanan Saya', desc: 'Pesanan aktif, terjadwal, dan berakhir' },
+                { id: 'invoice', title: 'Invoice', desc: 'Lihat dan unduh invoice Anda' },
+                { id: 'tagihan', title: 'Informasi Tagihan', desc: 'Edit nama penagihan, alamat Anda, dll.' },
+              ].map((item) => (
+                <button 
+                  key={item.id}
+                  className="w-full flex items-center justify-between p-6 border-b border-slate-50 hover:bg-slate-50 transition-colors text-left"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-base font-bold text-slate-800">{item.title}</h3>
+                      {item.badge && (
+                        <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-400 font-medium">{item.desc}</p>
+                  </div>
+                  <ChevronRight size={20} className="text-slate-300" />
+                </button>
+              ))}
+            </main>
+          </motion.div>
+        )}
+
+        {/* --- PESANAN MASUK (MITRA) --- */}
+        {activePage === 'pesanan' && (
+          <motion.div key="pesanan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <PageHeader title="Pesanan Masuk" subtitle="Kelola pesanan dari pelanggan" onBack={handleBack} />
+            <main className="px-6 -mt-4 space-y-4 pb-12">
+              {mitraOrders.length === 0 ? (
+                <div className="py-20 text-center">
+                  <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 opacity-50">
+                    <ClipboardList size={32} className="text-slate-400" />
+                  </div>
+                  <p className="text-slate-400 font-bold">Belum ada pesanan masuk</p>
+                </div>
+              ) : (
+                mitraOrders.map((order) => (
+                  <div key={order.id} className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100 neo-3d space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-800">{order.serviceTitle}</h3>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{order.customerName}</p>
+                      </div>
+                      <span className={`text-[9px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest ${
+                        order.status === 'accepted' ? 'bg-emerald-50 text-emerald-600' : 
+                        order.status === 'rejected' ? 'bg-rose-50 text-rose-600' : 
+                        'bg-amber-50 text-amber-600'
+                      }`}>
+                        {order.status === 'pending' ? 'Menunggu' : order.status === 'accepted' ? 'Diterima' : 'Ditolak'}
+                      </span>
+                    </div>
+                    
+                    <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center">
+                      <div>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase">Total Deal</p>
+                        <p className="text-sm font-extrabold text-primary">Rp {order.totalPrice.toLocaleString()}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[9px] font-bold text-slate-400 uppercase">Tanggal</p>
+                        <p className="text-[10px] font-bold text-slate-700">{order.date}</p>
+                      </div>
+                    </div>
+
+                    {order.status === 'pending' && (
+                      <div className="flex gap-3 pt-2">
+                        <button 
+                          onClick={() => {
+                            setMitraOrders(mitraOrders.map(o => o.id === order.id ? { ...o, status: 'accepted' } : o));
+                            alert('Pesanan diterima!');
+                          }}
+                          className="flex-1 bg-primary text-white py-3 rounded-xl font-bold text-xs shadow-lg shadow-primary/20 active:scale-95 transition-transform"
+                        >
+                          Terima
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setMitraOrders(mitraOrders.map(o => o.id === order.id ? { ...o, status: 'rejected' } : o));
+                            alert('Pesanan ditolak');
+                          }}
+                          className="flex-1 bg-white border border-slate-200 text-rose-500 py-3 rounded-xl font-bold text-xs active:scale-95 transition-transform"
+                        >
+                          Tolak
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </main>
           </motion.div>
         )}
@@ -85,27 +1515,35 @@
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Nama Lengkap <span className="text-rose-500">*</span></label>
-                    <input type="text" placeholder="Sesuai KTP" className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" />
+                    <input 
+                      type="text" 
+                      placeholder="Sesuai KTP" 
+                      value={signupName}
+                      onChange={(e) => setSignupName(e.target.value)}
+                      className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" 
+                    />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">No Handphone <span className="text-rose-500">*</span></label>
-                    <input type="tel" placeholder="Contoh: 081234567890" className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" />
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Email <span className="text-rose-500">*</span></label>
+                    <input 
+                      type="email" 
+                      placeholder="Email Anda" 
+                      value={signupEmail}
+                      onChange={(e) => setSignupEmail(e.target.value)}
+                      className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" 
+                    />
                   </div>
-
-                  <div className="flex items-center gap-4 py-2">
-                    <div className="flex-1 h-px bg-slate-100" />
-                    <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Atau</span>
-                    <div className="flex-1 h-px bg-slate-100" />
-                  </div>
-
-                  <button className="w-full bg-white border border-slate-200 text-slate-700 py-3.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-3 shadow-sm active:scale-95 transition-transform">
-                    <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" className="w-4 h-4" /> Daftar dengan Google
-                  </button>
 
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Kata Sandi <span className="text-rose-500">*</span></label>
-                    <input type="password" placeholder="Minimal 8 karakter" className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" />
+                    <input 
+                      type="password" 
+                      placeholder="Minimal 8 karakter" 
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" 
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -202,11 +1640,7 @@
                     </label>
                   </div>
 
-                  <button onClick={() => {
-                    alert('Pendaftaran dikirim! Silakan login untuk melanjutkan.'); 
-                    setIsMitra(true);
-                    navigateTo('login');
-                  }} className="w-full bg-primary text-white py-5 rounded-[30px] font-bold text-sm shadow-xl shadow-primary/30 mt-6">Kirim Pendaftaran</button>
+                  <button onClick={handleSignUp} className="w-full bg-primary text-white py-5 rounded-[30px] font-bold text-sm shadow-xl shadow-primary/30 mt-6">Kirim Pendaftaran</button>
                 </div>
               </div>
             </main>
@@ -220,10 +1654,30 @@
             <main className="px-6 -mt-4">
               <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 space-y-6">
                 <div className="space-y-4">
-                  <input type="email" placeholder="Email / Nomor HP" className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" />
-                  <input type="password" placeholder="Kata Sandi" className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" />
+                  <input 
+                    type="email" 
+                    placeholder="Email" 
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" 
+                  />
+                  <input 
+                    type="password" 
+                    placeholder="Kata Sandi" 
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" 
+                  />
                 </div>
-                <button onClick={() => {alert('Fitur login dalam pengembangan'); navigateTo('beranda');}} className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-primary/30 active:scale-95 transition-transform">Masuk</button>
+                <button 
+                  onClick={handleLogin}
+                  className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-primary/30 active:scale-95 transition-transform"
+                >
+                  Masuk
+                </button>
+                <div className="text-center">
+                  <button onClick={() => navigateTo('daftar-mitra')} className="text-xs font-bold text-primary">Belum punya akun? Daftar di sini</button>
+                </div>
                 <div className="flex items-center gap-4 py-2">
                   <div className="flex-1 h-px bg-slate-100" />
                   <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Atau</span>
