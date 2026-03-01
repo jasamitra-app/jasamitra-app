@@ -60,61 +60,45 @@ export const CATEGORIES = [
 
 export const SUB_CATEGORIES: Record<string, SubCategory[]> = {
   elektronik: [
-    { id: 'hp', nama: 'Servis HP', icon: Smartphone, count: 12 },
-    { id: 'mesin_cuci', nama: 'Servis Mesin Cuci', icon: WashingMachine, count: 8 },
-    { id: 'kulkas', nama: 'Servis Kulkas', icon: Thermometer, count: 10 },
-    { id: 'ac', nama: 'Servis AC', icon: Snowflake, count: 15 },
-    { id: 'amplifier', nama: 'Servis Amplifier', icon: Volume2, count: 6 },
-    { id: 'speaker', nama: 'Servis Speaker', icon: Music, count: 7 },
-    { id: 'tv', nama: 'Servis TV', icon: Tv, count: 9 },
-    { id: 'laptop', nama: 'Servis Laptop', icon: Laptop, count: 11 },
-    { id: 'camera', nama: 'Servis Camera DSLR/Mirrorless', icon: Camera, count: 4 }
+    { id: 'hp', nama: 'Servis HP', icon: Smartphone, count: 0 },
+    { id: 'mesin_cuci', nama: 'Servis Mesin Cuci', icon: WashingMachine, count: 0 },
+    { id: 'kulkas', nama: 'Servis Kulkas', icon: Thermometer, count: 0 },
+    { id: 'ac', nama: 'Servis AC', icon: Snowflake, count: 0 },
+    { id: 'amplifier', nama: 'Servis Amplifier', icon: Volume2, count: 0 },
+    { id: 'speaker', nama: 'Servis Speaker', icon: Music, count: 0 },
+    { id: 'tv', nama: 'Servis TV', icon: Tv, count: 0 },
+    { id: 'laptop', nama: 'Servis Laptop', icon: Laptop, count: 0 },
+    { id: 'camera', nama: 'Servis Camera DSLR/Mirrorless', icon: Camera, count: 0 }
   ],
   bangunan: [
-    { id: 'tukang', nama: 'Tukang Bangunan', icon: HardHat, count: 20 },
-    { id: 'cat', nama: 'Pengecatan', icon: PaintRoller, count: 12 },
-    { id: 'keramik', nama: 'Pasang Keramik', icon: Grid3X3, count: 8 },
-    { id: 'plafon', nama: 'Pasang Plafon', icon: Building, count: 6 },
-    { id: 'pipa', nama: 'Perbaikan Pipa', icon: Droplets, count: 9 },
-    { id: 'atap', nama: 'Perbaikan Atap', icon: Home, count: 5 }
+    { id: 'tukang', nama: 'Tukang Bangunan', icon: HardHat, count: 0 },
+    { id: 'cat', nama: 'Pengecatan', icon: PaintRoller, count: 0 },
+    { id: 'keramik', nama: 'Pasang Keramik', icon: Grid3X3, count: 0 },
+    { id: 'plafon', nama: 'Pasang Plafon', icon: Building, count: 0 },
+    { id: 'pipa', nama: 'Perbaikan Pipa', icon: Droplets, count: 0 },
+    { id: 'atap', nama: 'Perbaikan Atap', icon: Home, count: 0 }
   ],
   cleaning: [
-    { id: 'rumah', nama: 'Cuci Rumah', icon: Brush, count: 15 },
-    { id: 'sofa', nama: 'Cuci Sofa', icon: Sofa, count: 10 },
-    { id: 'karpet', nama: 'Cuci Karpet', icon: Brush, count: 8 },
-    { id: 'spring_bed', nama: 'Cuci Spring Bed', icon: Bed, count: 7 },
-    { id: 'ac', nama: 'Cuci AC', icon: Snowflake, count: 12 }
+    { id: 'rumah', nama: 'Cuci Rumah', icon: Brush, count: 0 },
+    { id: 'sofa', nama: 'Cuci Sofa', icon: Sofa, count: 0 },
+    { id: 'karpet', nama: 'Cuci Karpet', icon: Brush, count: 0 },
+    { id: 'spring_bed', nama: 'Cuci Spring Bed', icon: Bed, count: 0 },
+    { id: 'ac', nama: 'Cuci AC', icon: Snowflake, count: 0 }
   ],
   otomotif: [
-    { id: 'mobil', nama: 'Servis Mobil', icon: Car, count: 18 },
-    { id: 'motor', nama: 'Servis Motor', icon: Bike, count: 22 },
-    { id: 'ac_mobil', nama: 'Servis AC Mobil', icon: Snowflake, count: 9 },
-    { id: 'body_repair', nama: 'Body Repair', icon: PaintRoller, count: 7 }
+    { id: 'mobil', nama: 'Servis Mobil', icon: Car, count: 0 },
+    { id: 'motor', nama: 'Servis Motor', icon: Bike, count: 0 },
+    { id: 'ac_mobil', nama: 'Servis AC Mobil', icon: Snowflake, count: 0 },
+    { id: 'body_repair', nama: 'Body Repair', icon: PaintRoller, count: 0 }
   ],
   instalasi: [
-    { id: 'listrik', nama: 'Instalasi Listrik', icon: Bolt, count: 14 },
-    { id: 'cctv', nama: 'Pasang CCTV', icon: Video, count: 11 },
-    { id: 'internet', nama: 'Instalasi Internet', icon: Wifi, count: 9 },
-    { id: 'pompa_air', nama: 'Pasang Pompa Air', icon: Droplets, count: 6 }
+    { id: 'listrik', nama: 'Instalasi Listrik', icon: Bolt, count: 0 },
+    { id: 'cctv', nama: 'Pasang CCTV', icon: Video, count: 0 },
+    { id: 'internet', nama: 'Instalasi Internet', icon: Wifi, count: 0 },
+    { id: 'pompa_air', nama: 'Pasang Pompa Air', icon: Droplets, count: 0 }
   ],
   lainnya: [
-    { id: 'lain1', nama: 'Servis Lainnya', icon: Wrench, count: 5 }
+    { id: 'lain1', nama: 'Servis Lainnya', icon: Wrench, count: 0 }
   ]
 };
-
-export const SERVICES: Service[] = [
-  { id: 1, cat: 'elektronik', subcat: 'hp', title: 'Servis HP - Ganti LCD', price: 'Mulai Rp 250rb', img: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=200', rating: 4.9, reviews: 124 },
-  { id: 2, cat: 'elektronik', subcat: 'hp', title: 'Servis HP - Ganti Baterai', price: 'Mulai Rp 150rb', img: 'https://images.unsplash.com/photo-1585060544812-6b45742d762f?w=200', rating: 4.8, reviews: 89 },
-  { id: 3, cat: 'elektronik', subcat: 'mesin_cuci', title: 'Servis Mesin Cuci', price: 'Mulai Rp 200rb', img: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea9?w=200', rating: 4.7, reviews: 56 },
-  { id: 4, cat: 'elektronik', subcat: 'kulkas', title: 'Servis Kulkas', price: 'Mulai Rp 180rb', img: 'https://images.unsplash.com/photo-1571172964276-91f9210a93f9?w=200', rating: 4.9, reviews: 42 },
-  { id: 5, cat: 'elektronik', subcat: 'ac', title: 'Servis AC', price: 'Mulai Rp 150rb', img: 'https://images.unsplash.com/photo-1585333120117-0626bc968a33?w=200', rating: 5.0, reviews: 210 },
-  { id: 6, cat: 'elektronik', subcat: 'amplifier', title: 'Servis Amplifier', price: 'Mulai Rp 300rb', img: 'https://images.unsplash.com/photo-1613946069412-38f7f1ff0b65?w=200', rating: 4.6, reviews: 15 },
-  { id: 7, cat: 'elektronik', subcat: 'speaker', title: 'Servis Speaker', price: 'Mulai Rp 150rb', img: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=200', rating: 4.8, reviews: 34 },
-  { id: 8, cat: 'elektronik', subcat: 'tv', title: 'Servis TV', price: 'Mulai Rp 400rb', img: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=200', rating: 4.7, reviews: 67 },
-  { id: 9, cat: 'bangunan', subcat: 'tukang', title: 'Tukang Harian', price: 'Rp 150rb/hari', img: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=200', rating: 4.9, reviews: 156 },
-  { id: 10, cat: 'bangunan', subcat: 'cat', title: 'Pengecatan Rumah', price: 'Rp 25rb/m2', img: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=200', rating: 4.8, reviews: 92 },
-  { id: 11, cat: 'cleaning', subcat: 'rumah', title: 'Cuci Rumah', price: 'Rp 300rb', img: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=200', rating: 5.0, reviews: 45 },
-  { id: 12, cat: 'cleaning', subcat: 'sofa', title: 'Cuci Sofa', price: 'Rp 250rb', img: 'https://images.unsplash.com/photo-1550581190-9c1c48d21d6c?w=200', rating: 4.9, reviews: 78 },
-  { id: 13, cat: 'elektronik', subcat: 'camera', title: 'Servis Kamera DSLR & Mirrorless', price: 'Mulai Rp 200rb', img: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=200', rating: 4.9, reviews: 28 }
-];
-
+export const SERVICES: Service[] = []; // KOSONGKAN
