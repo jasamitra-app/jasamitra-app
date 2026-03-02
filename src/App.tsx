@@ -47,12 +47,12 @@ import {
   Service, 
   SubCategory 
 } from './constants';
-import { auth, db } from './lib/firebase';
+import { auth, db, isFirebaseConfigured } from './lib/firebase';
 import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
 import { collection, query, onSnapshot, addDoc, serverTimestamp, getDocs, where, orderBy } from 'firebase/firestore';
 
 // --- Types ---
-type Page = 'beranda' | 'pesan' | 'layanan' | 'akun' | 'login' | 'daftar-mitra' | 'kebijakan' | 'syarat-ketentuan' | 'edit-profil' | 'alamat-saya' | 'iklan-saya' | 'chat' | 'profil-mitra' | 'pesanan' | 'kaffa-cellular' | 'subkategori' | 'peraturan-pelanggan';
+type Page = 'beranda' | 'pesan' | 'layanan' | 'akun' | 'login' | 'daftar-mitra' | 'kebijakan' | 'syarat-ketentuan' | 'edit-profil' | 'alamat-saya' | 'iklan-saya' | 'chat' | 'profil-mitra' | 'pesanan' | 'subkategori' | 'peraturan-pelanggan';
 
 interface ChatMessage {
   id: string;
@@ -98,7 +98,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
       >
         <div className="w-32 h-32 bg-accent/20 rounded-[40px] flex items-center justify-center border-4 border-white/10 shadow-2xl backdrop-blur-xl relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-accent/40 to-transparent animate-pulse" />
-          <Handshake size={64} className="text-accent relative z-10" />
+          <Handshake size={64} className="text-white relative z-10" />
         </div>
       </motion.div>
       <motion.div
@@ -107,7 +107,9 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
         transition={{ delay: 0.5 }}
         className="mt-8 text-center"
       >
-        <h1 className="text-3xl font-black tracking-tighter text-white">JASAMITRA</h1>
+        <h1 className="text-3xl font-black tracking-tighter">
+          <span className="text-white">JASA</span><span className="text-accent">MITRA</span>
+        </h1>
         <p className="text-[10px] text-white/60 font-bold uppercase tracking-[0.3em] mt-2">Solusi Jasa Terpercaya</p>
       </motion.div>
     </motion.div>
@@ -130,7 +132,7 @@ const OnboardingScreen = ({ onSelect }: { onSelect: (role: 'tamu' | 'mitra') => 
         >
           <h2 className="text-4xl font-black leading-tight tracking-tighter mb-4">
             Selamat Datang di <br/>
-            <span className="text-accent">JASAMITRA</span>
+            <span className="text-white">JASA</span><span className="text-accent">MITRA</span>
           </h2>
           <p className="text-white/60 text-sm font-medium leading-relaxed max-w-[280px]">
             Pilih peran Anda untuk memulai pengalaman terbaik bersama kami.
@@ -164,7 +166,7 @@ const OnboardingScreen = ({ onSelect }: { onSelect: (role: 'tamu' | 'mitra') => 
             onClick={() => onSelect('mitra')}
             className="w-full bg-white/5 border border-white/10 p-6 rounded-[32px] flex items-center gap-5 backdrop-blur-xl group transition-all hover:bg-white/10"
           >
-            <div className="w-14 h-14 bg-accent/20 rounded-2xl flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-slate-900 transition-colors">
+            <div className="w-14 h-14 bg-accent/20 rounded-2xl flex items-center justify-center text-white group-hover:bg-accent group-hover:text-slate-900 transition-colors">
               <Handshake size={28} />
             </div>
             <div className="text-left">
@@ -249,7 +251,7 @@ const BottomNav = ({ activePage, onNav, onAdd, userRole }: { activePage: Page, o
 };
 
 const PageHeader = ({ title, subtitle, onBack }: { title: string, subtitle?: string, onBack?: () => void }) => (
-  <header className="bg-primary text-white pt-10 pb-12 px-8 rounded-b-[48px] shadow-2xl relative overflow-hidden">
+  <header className="bg-primary text-white pt-8 pb-10 px-6 rounded-b-[32px] shadow-xl relative overflow-hidden">
     <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl" />
     <div className="absolute bottom-0 left-0 w-32 h-32 bg-accent/10 rounded-full -ml-10 -mb-10 blur-2xl" />
     <div className="relative z-10 flex items-center justify-between">
@@ -258,18 +260,18 @@ const PageHeader = ({ title, subtitle, onBack }: { title: string, subtitle?: str
           <motion.button 
             whileTap={{ scale: 0.9 }}
             onClick={onBack} 
-            className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/10"
+            className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-white border border-white/10"
           >
-            <ArrowLeft size={20} strokeWidth={2.5} />
+            <ArrowLeft size={18} strokeWidth={2.5} />
           </motion.button>
         )}
         <div>
-          <h1 className="text-2xl font-black tracking-tighter italic leading-none">{title}</h1>
-          {subtitle && <p className="text-[10px] text-white/60 font-bold uppercase tracking-[0.2em] mt-1.5">{subtitle}</p>}
+          <h1 className="text-xl font-black tracking-tighter italic leading-none">{title}</h1>
+          {subtitle && <p className="text-[9px] text-white/60 font-bold uppercase tracking-[0.2em] mt-1.5">{subtitle}</p>}
         </div>
       </div>
-      <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/10">
-        <Bell size={20} />
+      <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center text-white border border-white/10">
+        <Bell size={18} />
       </div>
     </div>
   </header>
@@ -293,6 +295,7 @@ export default function App() {
   const [inputText, setInputText] = useState('');
   const [showDealModal, setShowDealModal] = useState(false);
   const [showAdModal, setShowAdModal] = useState(false);
+  const [showProtocol, setShowProtocol] = useState(false);
   const [showTrackingModal, setShowTrackingModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [activeDeal, setActiveDeal] = useState<any>(null);
@@ -301,14 +304,6 @@ export default function App() {
   const [adImage, setAdImage] = useState<string | null>(null);
   const [isMitra, setIsMitra] = useState(false);
   const [mitraOrders, setMitraOrders] = useState<any[]>([]);
-  const [kaffaForm, setKaffaForm] = useState({
-    nama: '',
-    wa: '',
-    jenis: 'Handphone',
-    model: '',
-    keluhan: ''
-  });
-  const [kaffaPhotos, setKaffaPhotos] = useState<string[]>([]);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
@@ -329,6 +324,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!isFirebaseConfigured) return;
     const q = query(collection(db, 'services'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const servicesList = snapshot.docs.map(doc => ({
@@ -343,7 +339,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!chatMitra) {
+    if (!chatMitra || !isFirebaseConfigured) {
       setMessages([]);
       return;
     }
@@ -378,6 +374,10 @@ export default function App() {
   });
 
   const handleLogin = async () => {
+    if (!isFirebaseConfigured) {
+      alert('Firebase belum dikonfigurasi. Silakan masukkan API Key Firebase di pengaturan lingkungan (Environment Variables).');
+      return;
+    }
     try {
       const { signInWithEmailAndPassword } = await import('firebase/auth');
       await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
@@ -389,7 +389,7 @@ export default function App() {
   };
 
   const handleGoogleLogin = async () => {
-    if (!auth || !auth.app) {
+    if (!isFirebaseConfigured) {
       alert('Firebase belum dikonfigurasi. Silakan masukkan API Key Firebase di pengaturan lingkungan (Environment Variables).');
       return;
     }
@@ -411,6 +411,10 @@ export default function App() {
   };
 
   const handleSignUp = async () => {
+    if (!isFirebaseConfigured) {
+      alert('Firebase belum dikonfigurasi. Silakan masukkan API Key Firebase di pengaturan lingkungan (Environment Variables).');
+      return;
+    }
     try {
       const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
       const userCredential = await createUserWithEmailAndPassword(auth, signupEmail, signupPassword);
@@ -503,6 +507,10 @@ export default function App() {
 
   const confirmDeal = async () => {
     if (!user || !activeDeal) return;
+    if (!isFirebaseConfigured) {
+      alert('Firebase belum dikonfigurasi. Fitur ini memerlukan integrasi Firebase.');
+      return;
+    }
 
     try {
       const dealContent = `✅ DEAL DISEPAKATI\nTotal: Rp ${activeDeal.total.toLocaleString()}\nJaminan 10%: Rp ${activeDeal.jaminan.toLocaleString()}`;
@@ -545,6 +553,11 @@ export default function App() {
       return;
     }
     
+    if (!isFirebaseConfigured) {
+      alert('Firebase belum dikonfigurasi. Fitur chat memerlukan integrasi Firebase.');
+      return;
+    }
+    
     // Sensor WA logic
     const polaWA = /(\+?62|0)8[1-9][0-9]{6,10}/g;
     let content = inputText.replace(polaWA, '🔴 [NOMOR DILARANG]');
@@ -584,42 +597,44 @@ export default function App() {
             exit={{ opacity: 0, x: 20 }}
             className="flex flex-col"
           >
-            <header className="bg-primary pt-14 pb-24 px-8 rounded-b-[56px] relative overflow-hidden shadow-2xl">
+            <header className="bg-primary pt-10 pb-16 px-6 rounded-b-[40px] relative overflow-hidden shadow-xl">
               <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl" />
               <div className="absolute bottom-0 left-0 w-40 h-40 bg-accent/10 rounded-full -ml-10 -mb-10 blur-2xl" />
               
               <div className="relative z-10">
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h1 className="text-2xl font-black tracking-tighter text-white">JASAMITRA</h1>
-                    <p className="text-[10px] text-white/40 font-bold uppercase tracking-[0.3em] mt-2">Solusi Jasa Terpercaya</p>
+                    <h1 className="text-xl font-black tracking-tighter">
+                      <span className="text-white">JASA</span><span className="text-accent">MITRA</span>
+                    </h1>
+                    <p className="text-[9px] text-white/40 font-bold uppercase tracking-[0.3em] mt-1.5">Solusi Jasa Terpercaya</p>
                   </div>
                   <motion.div 
                     whileTap={{ scale: 0.9 }}
                     onClick={() => navigateTo('akun')}
-                    className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-xl border border-white/10 shadow-inner cursor-pointer"
+                    className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-xl border border-white/10 shadow-inner cursor-pointer"
                   >
-                    <User size={22} className="text-white" />
+                    <User size={20} className="text-white" />
                   </motion.div>
                 </div>
 
                 <div className="relative group">
                   <div className="absolute inset-0 bg-accent/20 blur-xl group-focus-within:bg-accent/30 transition-all opacity-0 group-focus-within:opacity-100" />
-                  <div className="relative flex items-center bg-white/10 backdrop-blur-2xl border border-white/10 rounded-[28px] overflow-hidden focus-within:bg-white transition-all shadow-2xl">
-                    <Search className="ml-6 text-white/40 group-focus-within:text-primary transition-colors" size={20} />
+                  <div className="relative flex items-center bg-white/10 backdrop-blur-2xl border border-white/10 rounded-[24px] overflow-hidden focus-within:bg-white transition-all shadow-xl">
+                    <Search className="ml-5 text-white/40 group-focus-within:text-primary transition-colors" size={18} />
                     <input 
                       type="text" 
                       placeholder="Butuh jasa apa sekarang?" 
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-transparent text-white group-focus-within:text-slate-900 py-5 px-4 outline-none font-bold text-sm placeholder:text-white/30 placeholder:font-medium"
+                      className="w-full bg-transparent text-white group-focus-within:text-slate-900 py-4 px-3 outline-none font-bold text-sm placeholder:text-white/30 placeholder:font-medium"
                     />
                   </div>
                 </div>
               </div>
             </header>
 
-            <main className="px-6 -mt-10 relative z-20 pb-32">
+            <main className="px-6 -mt-6 relative z-20 pb-32">
               {/* Security Banner */}
               <motion.div 
                 initial={{ y: 20, opacity: 0 }}
@@ -644,7 +659,16 @@ export default function App() {
               <section className="mb-10">
                 <div className="flex items-center justify-between mb-5">
                   <h2 className="text-lg font-bold text-slate-800 tracking-tight">Kategori Layanan</h2>
-                  <button className="text-[10px] font-bold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1.5 rounded-full">Lihat Semua</button>
+                  <button 
+                    onClick={() => {
+                      setSelectedCat('all');
+                      setSelectedSub('all');
+                      navigateTo('subkategori');
+                    }}
+                    className="text-[10px] font-bold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1.5 rounded-full active:scale-95 transition-transform"
+                  >
+                    Lihat Semua
+                  </button>
                 </div>
                 <div className="grid grid-cols-4 gap-4">
                   {CATEGORIES.map((cat) => (
@@ -669,88 +693,68 @@ export default function App() {
                 </div>
               </section>
 
-              {/* Banners Toko */}
-              <section className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-slate-800">Toko Mitra</h2>
-                  <button className="text-xs font-bold text-primary uppercase tracking-widest">Lihat Semua</button>
-                </div>
-                <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-6 px-6">
-                  {[
-                    { id: 1, name: 'Toko Besi', img: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200', desc: 'Baja & Konstruksi' },
-                    { id: 2, name: 'Keramik', img: 'https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?w=200', desc: 'Lantai & Dinding' },
-                    { id: 3, name: 'Toko Vinyl', img: 'https://images.unsplash.com/photo-1581850518616-bcb8186c3f30?w=200', desc: 'Lantai Modern' },
-                    { id: 5, name: 'Nippon Paint', img: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=200', desc: 'Solusi Cat & Warna' },
-                  ].map((toko) => (
-                    <motion.div 
-                      key={toko.id} 
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        alert(`Halaman ${toko.name} dalam pengembangan`);
-                      }}
-                      className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 neo-3d cursor-pointer min-w-[140px] max-w-[140px]"
-                    >
-                      <img src={toko.img} className="w-full h-24 object-cover" alt={toko.name} referrerPolicy="no-referrer" />
-                      <div className="p-3">
-                        <h3 className="text-[10px] font-bold text-slate-800 truncate">{toko.name}</h3>
-                        <p className="text-[8px] text-slate-400 font-bold uppercase tracking-tighter">{toko.desc}</p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </section>
 
-              {/* Rekomendasi Mitra (Subscription) */}
+
+              {/* Toko Mitra */}
               <section className="mb-10">
                 <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-bold text-slate-800 tracking-tight">Mitra Unggulan</h2>
-                    <div className="bg-accent/20 text-accent text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border border-accent/30 flex items-center gap-1">
-                      <Star size={8} fill="currentColor" /> PRO
-                    </div>
-                  </div>
+                  <h2 className="text-lg font-bold text-slate-800 tracking-tight">Toko Mitra</h2>
                   <button className="text-[10px] font-bold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1.5 rounded-full">Lihat Semua</button>
                 </div>
-                <div className="flex gap-5 overflow-x-auto pb-6 hide-scrollbar -mx-6 px-6">
-                  {[
-                    { id: 4, name: 'Kaffa Cellular', img: 'https://i.ibb.co.com/zWJ6DwYx/images-6.webp', desc: 'Spesialis Servis Gadget', rating: 5.0, jobs: 120 },
-                    { id: 102, name: 'Siti Clean', img: 'https://images.unsplash.com/photo-1581578731548-c64695cc6958?w=200', desc: 'Jasa Kebersihan Profesional', rating: 4.8, jobs: 85 },
-                    { id: 103, name: 'Aris Bangun', img: 'https://images.unsplash.com/photo-1503387762-592dec5832f2?w=200', desc: 'Renovasi & Konstruksi', rating: 5.0, jobs: 45 },
-                    { id: 104, name: 'Dewi Tailor', img: 'https://images.unsplash.com/photo-1552330892-344c53c33f5d?w=200', desc: 'Jahit & Desain Busana', rating: 4.7, jobs: 210 },
-                  ].map((mitra) => (
+                <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-6 px-6">
+                  {[1, 2, 3, 4, 5].map((i) => (
                     <motion.div 
-                      key={mitra.id} 
-                      whileHover={{ y: -8 }}
+                      key={i}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        if (mitra.id === 4) {
-                          navigateTo('kaffa-cellular');
-                        } else {
-                          alert(`Detail ${mitra.name} akan segera hadir`);
-                        }
-                      }}
-                      className="bg-white rounded-[32px] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-slate-100 cursor-pointer min-w-[180px] max-w-[180px] relative group"
+                      className="min-w-[140px] bg-white p-4 rounded-[32px] shadow-sm border border-slate-100 neo-3d flex flex-col items-center text-center gap-3 shrink-0"
                     >
-                      <div className="absolute top-3 right-3 z-10 bg-white/90 backdrop-blur-md px-2 py-1 rounded-xl flex items-center gap-1 shadow-sm border border-white/50">
-                        <Star size={10} className="text-accent fill-accent" />
-                        <span className="text-[10px] font-black text-slate-800">{mitra.rating}</span>
+                      <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center overflow-hidden shadow-inner border border-slate-50">
+                        <img 
+                          src={`https://picsum.photos/seed/shop${i}/200/200`} 
+                          alt={`Toko ${i}`}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
                       </div>
-                      <div className="h-32 overflow-hidden relative">
-                        <img src={mitra.img} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={mitra.name} referrerPolicy="no-referrer" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                      <div>
+                        <h3 className="text-[11px] font-bold text-slate-800 line-clamp-1">Mitra Shop {i}</h3>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">Verified</p>
                       </div>
-                      <div className="p-4">
-                        <div className="flex items-center gap-1 mb-1">
-                          <h3 className="text-[12px] font-bold text-slate-800 truncate">{mitra.name}</h3>
-                          <ShieldCheck size={12} className="text-primary shrink-0" />
+                    </motion.div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Mitra Unggulan */}
+              <section className="mb-10">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-lg font-bold text-slate-800 tracking-tight">Mitra Unggulan</h2>
+                </div>
+                <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-6 px-6">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <motion.div 
+                      key={i}
+                      whileTap={{ scale: 0.95 }}
+                      className="min-w-[120px] flex flex-col items-center gap-3 shrink-0"
+                    >
+                      <div className="relative">
+                        <div className="w-20 h-20 rounded-full border-4 border-white shadow-xl overflow-hidden bg-slate-100">
+                          <img 
+                            src={`https://picsum.photos/seed/pro${i}/200/200`} 
+                            alt={`Mitra ${i}`}
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
                         </div>
-                        <p className="text-[10px] text-slate-400 font-medium line-clamp-1 mb-3">{mitra.desc}</p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1">
-                            <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-                            <span className="text-[9px] font-bold text-primary uppercase tracking-tighter">Online</span>
-                          </div>
-                          <span className="text-[9px] font-bold text-slate-400">{mitra.jobs} Selesai</span>
+                        <div className="absolute -bottom-1 -right-1 bg-accent text-white p-1.5 rounded-full shadow-lg border-2 border-white">
+                          <Star size={10} fill="white" />
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <h3 className="text-[11px] font-bold text-slate-800">Mitra Jagoan {i}</h3>
+                        <div className="flex items-center justify-center gap-1 mt-0.5">
+                          <Star size={8} className="text-accent fill-accent" />
+                          <span className="text-[9px] font-bold text-slate-500">5.0</span>
                         </div>
                       </div>
                     </motion.div>
@@ -758,40 +762,51 @@ export default function App() {
                 </div>
               </section>
 
-              {/* Home Service List (Recommendations Only) */}
+              {/* Rekomendasi Untukmu (Real Data from Firestore) */}
               <section className="mb-8">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-slate-800">Rekomendasi Untukmu</h2>
+                  <h2 className="text-lg font-bold text-slate-800 tracking-tight">Rekomendasi Untukmu</h2>
                 </div>
                 <div className="space-y-4">
-                  {services.slice(0, 5).map((service) => (
-                    <motion.div 
-                      key={service.id}
-                      whileTap={{ scale: 0.98 }}
-                      className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex gap-4 neo-3d cursor-pointer"
-                      onClick={() => openMitraProfile(service)}
-                    >
-                      <img 
-                        src={service.img} 
-                        alt={service.title}
-                        className="w-20 h-20 rounded-2xl object-cover shadow-inner"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="flex-1 flex flex-col justify-between">
-                        <div>
-                          <h3 className="text-sm font-bold text-slate-800 line-clamp-1">{service.title}</h3>
-                          <div className="flex items-center gap-1 mt-1">
-                            <Star size={12} className="text-accent fill-accent" />
-                            <span className="text-[10px] font-bold text-slate-600">{service.rating}</span>
+                  {services.length > 0 ? (
+                    services.slice(0, 10).map((service) => (
+                      <motion.div 
+                        key={service.id}
+                        whileTap={{ scale: 0.98 }}
+                        className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex gap-4 neo-3d cursor-pointer"
+                        onClick={() => openMitraProfile(service)}
+                      >
+                        <img 
+                          src={service.img} 
+                          alt={service.title}
+                          className="w-20 h-20 rounded-2xl object-cover shadow-inner"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="flex-1 flex flex-col justify-between">
+                          <div>
+                            <h3 className="text-sm font-bold text-slate-800 line-clamp-1">{service.title}</h3>
+                            <div className="flex items-center gap-1 mt-1">
+                              <Star size={12} className="text-accent fill-accent" />
+                              <span className="text-[10px] font-bold text-slate-600">{service.rating}</span>
+                              <span className="text-[10px] text-slate-400 font-medium">({service.reviews})</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-sm font-extrabold text-primary">{service.price}</span>
+                            <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Detail</span>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between mt-2">
-                          <span className="text-sm font-extrabold text-primary">{service.price}</span>
-                          <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Detail</span>
-                        </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="bg-white p-10 rounded-3xl border border-dashed border-slate-200 text-center">
+                      <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <ClipboardList size={32} className="text-slate-300" />
                       </div>
-                    </motion.div>
-                  ))}
+                      <p className="text-sm font-bold text-slate-400">Belum ada iklan jasa tersedia</p>
+                      <p className="text-[10px] text-slate-300 mt-1">Iklan akan muncul setelah mitra mendaftar</p>
+                    </div>
+                  )}
                 </div>
               </section>
             </main>
@@ -943,51 +958,6 @@ export default function App() {
           </motion.div>
         )}
 
-                {activePage === 'peraturan-pelanggan' && (
-                  <motion.div key="peraturan-pelanggan" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                    <PageHeader title="Peraturan Pelanggan" subtitle="Hak & Kewajiban Pengguna Jasa" onBack={handleBack} />
-                    <main className="px-6 -mt-4 pb-12">
-                      <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 space-y-8 neo-3d">
-                        <div className="space-y-4">
-                          <div className="w-16 h-16 bg-primary/10 rounded-3xl flex items-center justify-center text-primary mb-6">
-                            <ShieldCheck size={32} />
-                          </div>
-                          <h3 className="text-xl font-black text-slate-800 tracking-tighter italic">Jaminan Keamanan <span className="text-primary">Pelanggan</span></h3>
-                          <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                            Sebagai platform jasa terpercaya, kami berkomitmen menjaga keamanan transaksi Anda melalui sistem jaminan 10%.
-                          </p>
-                        </div>
-
-                        <div className="space-y-6 pt-6 border-t border-slate-50">
-                          {[
-                            { title: 'Sistem Pembayaran', desc: 'Pelanggan wajib membayar DP 10% melalui aplikasi sebagai jaminan pesanan. Sisa 90% dibayarkan tunai langsung ke mitra setelah pekerjaan selesai.' },
-                            { title: 'Pembatalan Pesanan', desc: 'Pembatalan oleh pelanggan setelah mitra berangkat akan dikenakan biaya administrasi dari nilai DP yang telah dibayarkan.' },
-                            { title: 'Keamanan Data', desc: 'Dilarang memberikan nomor WhatsApp atau kontak pribadi di dalam chat sebelum terjadi kesepakatan deal untuk menghindari penipuan.' },
-                            { title: 'Etika Berinteraksi', desc: 'Berkomunikasilah dengan sopan dan hargai profesi mitra. Segala bentuk pelecehan akan berakibat pada pemblokiran akun permanen.' }
-                          ].map((item, i) => (
-                            <div key={i} className="flex gap-4">
-                              <div className="w-8 h-8 bg-slate-50 rounded-xl flex items-center justify-center text-primary font-bold text-xs shrink-0">{i + 1}</div>
-                              <div>
-                                <h4 className="text-sm font-bold text-slate-800 mb-1">{item.title}</h4>
-                                <p className="text-xs text-slate-400 leading-relaxed font-medium">{item.desc}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        <div className="bg-accent/10 p-6 rounded-3xl border border-accent/20">
-                          <div className="flex items-center gap-2 mb-2 text-accent">
-                            <AlertTriangle size={18} />
-                            <h4 className="text-xs font-bold uppercase tracking-widest">Peringatan Penting</h4>
-                          </div>
-                          <p className="text-[10px] text-accent font-medium leading-relaxed">
-                            JasaMitra tidak bertanggung jawab atas transaksi yang dilakukan di luar sistem aplikasi. Pastikan selalu menggunakan fitur "Deal" untuk perlindungan maksimal.
-                          </p>
-                        </div>
-                      </div>
-                    </main>
-                  </motion.div>
-                )}
                 {activePage === 'akun' && (
           <motion.div 
             key="akun"
@@ -1042,6 +1012,80 @@ export default function App() {
                     <ChevronRight size={18} className="text-slate-300" />
                   </button>
                 ))}
+              </div>
+
+              {/* Protokol Keselamatan & Profesionalisme (Accordion) */}
+              <div className="bg-white rounded-[40px] shadow-sm border border-slate-100 overflow-hidden mb-8 neo-3d">
+                <button 
+                  onClick={() => setShowProtocol(!showProtocol)}
+                  className="w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+                      <ShieldCheck size={20} />
+                    </div>
+                    <div className="text-left">
+                      <span className="text-sm font-bold text-slate-700 block">Protokol Keselamatan & Profesionalisme</span>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Harap dipatuhi oleh seluruh mitra</span>
+                    </div>
+                  </div>
+                  <motion.div animate={{ rotate: showProtocol ? 90 : 0 }}>
+                    <ChevronRight size={18} className="text-slate-300" />
+                  </motion.div>
+                </button>
+                
+                <AnimatePresence>
+                  {showProtocol && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-8 pb-8 pt-2 space-y-6 border-t border-slate-50">
+                        <div className="flex gap-4">
+                          <div className="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                            <span className="text-xs font-black text-emerald-600">01</span>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-800 mb-1.5">Alat Pelindung Diri (APD)</h4>
+                            <p className="text-[10px] text-slate-500 leading-relaxed font-medium">Gunakan perlengkapan keamanan kerja sesuai jenis pekerjaan untuk menjaga keselamatan diri dan pelanggan.</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-4">
+                          <div className="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                            <span className="text-xs font-black text-emerald-600">02</span>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-800 mb-1.5">Identitas Profesional</h4>
+                            <p className="text-[10px] text-slate-500 leading-relaxed font-medium">Tunjukkan identitas diri yang sah dan hadir dengan penampilan yang rapi saat melayani pelanggan.</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-4">
+                          <div className="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                            <span className="text-xs font-black text-emerald-600">03</span>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-800 mb-1.5">Kebersihan Area Kerja</h4>
+                            <p className="text-[10px] text-slate-500 leading-relaxed font-medium">Pertahankan kerapian selama proses pekerjaan dan pastikan area kerja dibersihkan kembali setelah tugas selesai.</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-4">
+                          <div className="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                            <span className="text-xs font-black text-emerald-600">04</span>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-800 mb-1.5">Komunikasi Sopan & Informatif</h4>
+                            <p className="text-[10px] text-slate-500 leading-relaxed font-medium">Berkomunikasilah dengan bahasa yang santun dan jelaskan setiap langkah pekerjaan secara jelas kepada pelanggan</p>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {userRole && (
@@ -1222,186 +1266,6 @@ export default function App() {
           </motion.div>
         )}
 
-        {/* --- KAFFA CELLULAR --- */}
-        {activePage === 'kaffa-cellular' && (
-          <motion.div key="kaffa-cellular" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-            <PageHeader title="Kaffa Cellular" subtitle="Gadget Solution" onBack={handleBack} />
-            <main className="px-6 -mt-4 pb-24 space-y-6">
-              {/* Info Toko */}
-              <div className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100 space-y-4 neo-3d">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center overflow-hidden shadow-inner">
-                    <img src="https://i.ibb.co.com/zWJ6DwYx/images-6.webp" className="w-full h-full object-cover" alt="Kaffa Cellular" referrerPolicy="no-referrer" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-800">Kaffa Cellular</h3>
-                    <div className="flex items-center gap-1.5 text-primary">
-                      <Clock size={14} />
-                      <span className="text-[11px] font-bold uppercase tracking-wider">Buka 12:00 - 24:00</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1">Alamat Lengkap</p>
-                  <p className="text-xs text-slate-600 font-medium leading-relaxed bg-slate-50 p-4 rounded-2xl">
-                    Jalan Sukasugih Jl. Sederhana No.20, Pasteur, Kec. Sukajadi, Kota Bandung, Jawa Barat 40161
-                  </p>
-                </div>
-
-                <div className="flex gap-3">
-                  <button 
-                    onClick={() => window.open('https://www.google.com/maps/search/?api=1&query=Kaffa+Cellular+Bandung', '_blank')}
-                    className="flex-1 bg-slate-50 text-slate-700 py-3.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform"
-                  >
-                    <MapPin size={16} /> Buka Maps
-                  </button>
-                  <button 
-                    onClick={() => window.location.href = 'tel:082240998081'}
-                    className="flex-1 bg-primary/10 text-primary py-3.5 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-transform"
-                  >
-                    <Send size={16} /> Hubungi
-                  </button>
-                </div>
-              </div>
-
-              {/* Form Servis */}
-              <div className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100 space-y-6 neo-3d">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-1 h-5 bg-primary rounded-full" />
-                  <h3 className="text-sm font-bold text-slate-800">Form Permintaan Servis</h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Nama Lengkap <span className="text-rose-500">*</span></label>
-                    <input 
-                      type="text" 
-                      placeholder="Nama Anda" 
-                      value={kaffaForm.nama}
-                      onChange={(e) => setKaffaForm({...kaffaForm, nama: e.target.value})}
-                      className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" 
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">No. WhatsApp <span className="text-rose-500">*</span></label>
-                    <input 
-                      type="tel" 
-                      placeholder="Contoh: 081234567890" 
-                      value={kaffaForm.wa}
-                      onChange={(e) => setKaffaForm({...kaffaForm, wa: e.target.value})}
-                      className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" 
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Jenis Gadget <span className="text-rose-500">*</span></label>
-                    <select 
-                      value={kaffaForm.jenis}
-                      onChange={(e) => setKaffaForm({...kaffaForm, jenis: e.target.value})}
-                      className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none appearance-none"
-                    >
-                      {['Handphone', 'Tablet'].map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Merk / Model</label>
-                    <input 
-                      type="text" 
-                      placeholder="Contoh: iPhone 13 Pro" 
-                      value={kaffaForm.model}
-                      onChange={(e) => setKaffaForm({...kaffaForm, model: e.target.value})}
-                      className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20" 
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Keluhan Kerusakan <span className="text-rose-500">*</span></label>
-                    <textarea 
-                      placeholder="Jelaskan kendala gadget Anda..." 
-                      value={kaffaForm.keluhan}
-                      onChange={(e) => setKaffaForm({...kaffaForm, keluhan: e.target.value})}
-                      className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 ring-primary/20 min-h-[100px] resize-none" 
-                    />
-                  </div>
-
-                  {/* Upload Foto */}
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Foto Gadget (Maks 3)</label>
-                    <div className="grid grid-cols-3 gap-3">
-                      {[0, 1, 2].map((idx) => (
-                        <div 
-                          key={idx}
-                          onClick={() => idx === kaffaPhotos.length && document.getElementById('kaffa-photo-upload')?.click()}
-                          className={`aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-1 transition-all overflow-hidden ${
-                            kaffaPhotos[idx] ? 'border-primary/50 bg-white' : 'border-slate-200 bg-slate-50'
-                          } ${idx === kaffaPhotos.length ? 'cursor-pointer hover:border-primary/30' : ''}`}
-                        >
-                          {kaffaPhotos[idx] ? (
-                            <img src={kaffaPhotos[idx]} className="w-full h-full object-cover" />
-                          ) : (
-                            <>
-                              <Camera size={20} className="text-slate-300" />
-                              <span className="text-[8px] font-bold text-slate-400 uppercase">Upload</span>
-                            </>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    <input 
-                      id="kaffa-photo-upload"
-                      type="file" 
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file && kaffaPhotos.length < 3) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setKaffaPhotos([...kaffaPhotos, reader.result as string]);
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                    {kaffaPhotos.length > 0 && (
-                      <button 
-                        onClick={() => setKaffaPhotos([])}
-                        className="text-[9px] font-bold text-rose-500 uppercase tracking-widest ml-2 mt-1"
-                      >
-                        Hapus Semua Foto
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <button 
-                  onClick={() => {
-                    if (!kaffaForm.nama || !kaffaForm.wa || !kaffaForm.keluhan) {
-                      alert('Mohon lengkapi data yang wajib diisi (*)');
-                      return;
-                    }
-                    if (kaffaForm.wa.length < 10 || kaffaForm.wa.length > 13) {
-                      alert('Nomor WhatsApp harus antara 10-13 digit');
-                      return;
-                    }
-
-                    const message = `Halo Kaffa Cellular,\n\nSaya ingin mengajukan servis gadget:\n\nNama: ${kaffaForm.nama}\nNo. WA: ${kaffaForm.wa}\nJenis: ${kaffaForm.jenis}\nMerk/Model: ${kaffaForm.model || '-'}\nKeluhan: ${kaffaForm.keluhan}\n\nTerima kasih.`;
-                    const encodedMsg = encodeURIComponent(message);
-                    window.open(`https://wa.me/6282240998081?text=${encodedMsg}`, '_blank');
-                  }}
-                  className="w-full bg-primary text-white py-5 rounded-[30px] font-bold text-sm shadow-xl shadow-primary/30 mt-4 active:scale-95 transition-transform flex items-center justify-center gap-2"
-                >
-                  <Send size={18} /> Kirim Permintaan
-                </button>
-              </div>
-            </main>
-          </motion.div>
-        )}
 
         {/* --- PESANAN MASUK (MITRA) --- */}
         {activePage === 'pesanan' && (
@@ -1614,35 +1478,6 @@ export default function App() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">NIK</label>
                     <input type="number" placeholder="16 Digit NIK" className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none" />
-                  </div>
-
-                  <div className="bg-primary/5 p-6 rounded-3xl border border-primary/10 space-y-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                        <ShieldCheck size={20} />
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-black text-primary uppercase tracking-wider">Protokol Keselamatan & Profesionalisme</h4>
-                        <p className="text-[9px] text-primary/60 font-bold uppercase tracking-widest">Wajib Dipatuhi Seluruh Mitra</p>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 gap-3">
-                      {[
-                        { title: 'Alat Pelindung Diri (APD)', desc: 'Wajib menggunakan masker, sarung tangan, atau helm kerja sesuai jenis jasa yang diberikan.' },
-                        { title: 'Identitas Resmi', desc: 'Selalu gunakan seragam atau tanda pengenal JasaMitra saat berkunjung ke lokasi pelanggan.' },
-                        { title: 'Area Kerja Bersih', desc: 'Wajib merapikan dan membersihkan kembali area kerja setelah pekerjaan selesai dilakukan.' },
-                        { title: 'Komunikasi Sopan', desc: 'Gunakan bahasa yang santun dan jelaskan setiap langkah perbaikan kepada pelanggan.' }
-                      ].map((item, i) => (
-                        <div key={i} className="bg-white/60 p-3 rounded-2xl border border-primary/5 flex gap-3">
-                          <div className="w-6 h-6 bg-primary/10 rounded-lg flex items-center justify-center text-primary text-[10px] font-black shrink-0">{i+1}</div>
-                          <div>
-                            <h5 className="text-[10px] font-bold text-primary mb-0.5">{item.title}</h5>
-                            <p className="text-[9px] text-primary/70 leading-relaxed font-medium">{item.desc}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
                   </div>
 
                   <div className="bg-rose-50 p-6 rounded-3xl border border-rose-100 space-y-4">
@@ -1887,7 +1722,9 @@ export default function App() {
                     <ShieldCheck size={24} />
                   </div>
                   <div>
-                    <h1 className="text-xl font-black tracking-tighter text-primary">JASAMITRA</h1>
+                    <h1 className="text-xl font-black tracking-tighter">
+                      <span className="text-primary">JASA</span><span className="text-accent">MITRA</span>
+                    </h1>
                     <p className="text-[11px] text-slate-400 font-medium">Solusi jasa terpercaya dengan jaminan 10%</p>
                   </div>
                 </div>
@@ -1898,6 +1735,7 @@ export default function App() {
                     { id: 'umum', label: 'Ketentuan Umum' },
                     { id: 'jaminan', label: 'Jaminan 10%', active: true },
                     { id: 'mitra', label: 'Mitra' },
+                    { id: 'protokol', label: 'Protokol' },
                     { id: 'pelanggan', label: 'Pelanggan' },
                   ].map((nav) => (
                     <button 
@@ -2021,6 +1859,28 @@ export default function App() {
                         <li>Mitra wajib menjaga etika, kesopanan, dan keamanan saat di lokasi Pengguna.</li>
                         <li>Pelanggaran berat (penipuan, pelecehan, pencurian) akan diproses secara hukum.</li>
                       </ul>
+                    </div>
+                  </div>
+
+                  {/* Bagian Baru: Protokol Keselamatan & Profesionalisme */}
+                  <div id="protokol" className="scroll-mt-20">
+                    <h3 className="text-base font-bold text-primary mb-4 flex items-center gap-3">
+                      <div className="w-1.5 h-5 bg-primary rounded-full" />
+                      PROTOKOL KESELAMATAN & PROFESIONALISME
+                    </h3>
+                    <p className="text-xs text-slate-500 font-bold mb-4">Harap dipatuhi oleh seluruh mitra:</p>
+                    <div className="space-y-4">
+                      {[
+                        { title: 'Alat Pelindung Diri (APD)', desc: 'Gunakan perlengkapan keamanan kerja sesuai jenis pekerjaan untuk menjaga keselamatan diri dan pelanggan.' },
+                        { title: 'Identitas Profesional', desc: 'Tunjukkan identitas diri yang sah dan hadir dengan penampilan yang rapi saat melayani pelanggan.' },
+                        { title: 'Kebersihan Area Kerja', desc: 'Pertahankan kerapian selama proses pekerjaan dan pastikan area kerja dibersihkan kembali setelah tugas selesai.' },
+                        { title: 'Komunikasi Sopan & Informatif', desc: 'Berkomunikasilah dengan bahasa yang santun dan jelaskan setiap langkah pekerjaan secara jelas kepada pelanggan.' }
+                      ].map((item, i) => (
+                        <div key={i} className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                          <h4 className="text-sm font-bold text-slate-800 mb-1">{item.title}</h4>
+                          <p className="text-xs text-slate-500 leading-relaxed font-medium">{item.desc}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
