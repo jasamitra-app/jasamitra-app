@@ -553,8 +553,37 @@ export default function App() {
               <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-500/10 rounded-full -ml-10 -mb-10 blur-[60px]" />
               
               <div className="relative z-10">
-                Zedd
-                </div>
+  <div className="flex justify-between items-center mb-6">
+    <div>
+      <h1 className="text-2xl font-black tracking-tighter italic">JASA<span className="text-primary">MITRA</span></h1>
+      <div className="flex items-center gap-1.5 mt-0.5">
+        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sistem Jaminan Aktif</span>
+      </div>
+    </div>
+    <motion.div 
+      whileTap={{ scale: 0.9 }}
+      onClick={() => navigateTo('akun')}
+      className="w-11 h-11 bg-white/5 rounded-2xl flex items-center justify-center backdrop-blur-xl border border-white/10 shadow-inner cursor-pointer"
+    >
+      <User size={20} className="text-slate-300" />
+    </motion.div>
+  </div>
+
+  <div className="relative group">
+    <div className="absolute inset-0 bg-primary/20 blur-xl group-focus-within:bg-primary/30 transition-all opacity-0 group-focus-within:opacity-100" />
+    <div className="relative flex items-center bg-white/10 backdrop-blur-2xl border border-white/10 rounded-[24px] overflow-hidden focus-within:bg-white transition-all shadow-2xl">
+      <Search className="ml-5 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
+      <input 
+        type="text" 
+        placeholder="Butuh jasa apa sekarang?" 
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full bg-transparent text-white group-focus-within:text-slate-900 py-4.5 px-4 outline-none font-bold text-sm placeholder:text-slate-500 placeholder:font-medium"
+      />
+    </div>
+  </div>
+</div>
               </div>
             </header>
 
