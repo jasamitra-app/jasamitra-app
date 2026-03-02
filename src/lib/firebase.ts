@@ -21,34 +21,16 @@ let db: any;
 let storage: any;
 
 try {
-  if (isConfigValid) {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    storage = getStorage(app);
-  } else {
-    throw new Error("Firebase configuration is missing or invalid.");
-  }
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
 } catch (error) {
-  console.warn("Firebase initialization failed, using dummy services:", error);
+  console.error("Firebase initialization failed:", error);
   // Provide dummy objects to prevent immediate crashes
-  app = { name: "[DEFAULT]", options: {} };
-  auth = { 
-    onAuthStateChanged: (cb: any) => {
-      // Simulate no user
-      cb(null);
-      return () => {};
-    },
-    signOut: async () => {},
-    currentUser: null,
-    app: app
-  } as any;
-  db = {
-    app: app
-  } as any;
-  storage = {
-    app: app
-  } as any;
+  auth = { onAuthStateChanged: () => () => {} } as any;
+  db = {} as any;
+  storage = {} as any;
 }
 
 export { auth, db, storage };
