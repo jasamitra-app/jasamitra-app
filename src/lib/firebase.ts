@@ -1,46 +1,38 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
-// Firebase configuration
+const isConfigValid = !!(import.meta as any).env?.VITE_FIREBASE_API_KEY;
+
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  apiKey: (import.meta as any).env?.VITE_FIREBASE_API_KEY || "dummy-key",
+  authDomain: (import.meta as any).env?.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: (import.meta as any).env?.VITE_FIREBASE_PROJECT_ID || "dummy-project",
+  storageBucket: (import.meta as any).env?.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: (import.meta as any).env?.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: (import.meta as any).env?.VITE_FIREBASE_APP_ID,
+  measurementId: (import.meta as any).env?.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase
-let app;
-let auth;
-let db;
-let storage;
-let isFirebaseConfigured = false;
+let app: any;
+let auth: any;
+let db: any;
+let storage: any;
 
 try {
-  // Cek apakah semua konfigurasi ada
-  if (firebaseConfig.apiKey && firebaseConfig.apiKey !== 'undefined' && firebaseConfig.apiKey !== '') {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    storage = getStorage(app);
-    isFirebaseConfigured = true;
-    console.log('✅ Firebase initialized successfully');
-  } else {
-    console.warn('⚠️ Firebase configuration incomplete');
-  }
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
 } catch (error) {
-  console.error('❌ Firebase initialization error:', error);
+  console.error("Firebase initialization failed:", error);
+  auth = { onAuthStateChanged: () => () => {} } as any;
+  db = {} as any;
+  storage = {} as any;
 }
 
-// Export dengan fallback object
-export { 
-  auth, 
-  db, 
-  storage, 
-  isFirebaseConfigured 
-};
+export { auth, db, storage };
+export const isFirebaseConfigured = isConfigValid;
+
 export default app;
