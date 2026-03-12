@@ -43,7 +43,9 @@ import {
   Hourglass,
   ShoppingBag,
   Tag,
-  Store
+  Store,
+  Zap,
+  Wallet
 } from 'lucide-react';
 import { 
   CATEGORIES, 
@@ -86,6 +88,7 @@ interface Transaction {
   id: string;
   customerID: string;
   mitraID: string;
+  serviceId?: string;
   totalPrice: number;
   dpAmount: number;
   status: 'pending' | 'paid' | 'completed';
@@ -119,39 +122,66 @@ interface Order {
 
 const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   useEffect(() => {
-    const timer = setTimeout(onComplete, 2500);
+    const timer = setTimeout(onComplete, 3000);
     return () => clearTimeout(timer);
   }, [onComplete]);
 
   return (
     <motion.div 
       initial={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white"
+      exit={{ opacity: 0, transition: { duration: 0.6, ease: "easeInOut" } }}
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white overflow-hidden"
     >
-      <motion.div 
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="relative"
-      >
-        <div className="w-48 h-48 bg-white rounded-[60px] flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100 relative overflow-hidden">
-          <Handshake size={80} className="text-[#003366] relative z-10" />
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-transparent opacity-50" />
-        </div>
-      </motion.div>
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="mt-12 text-center"
-      >
-        <h1 className="text-4xl font-black tracking-tight flex items-center justify-center">
-          <span className="text-[#003366]">JASA</span>
-          <span className="text-[#F27D26]">MITRA</span>
-        </h1>
-        <p className="text-xs text-slate-400 font-bold uppercase tracking-[0.5em] mt-4 opacity-60">Solusi Jasa Terpercaya</p>
-      </motion.div>
+      {/* Subtle Decorative Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-[#003366]/5 to-transparent blur-3xl" />
+        <div className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tl from-[#F27D26]/5 to-transparent blur-3xl" />
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center">
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="relative mb-8"
+        >
+          {/* White Logo Box */}
+          <div className="w-32 h-32 bg-white rounded-[40px] flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-transparent opacity-50" />
+            <Handshake size={64} className="text-[#003366] relative z-10 drop-shadow-sm" />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center"
+        >
+          <h1 className="text-5xl font-black tracking-tight flex items-center justify-center drop-shadow-sm">
+            <span className="text-[#003366]">JASA</span>
+            <span className="text-[#F27D26]">MITRA</span>
+          </h1>
+          <p className="text-xs text-slate-400 font-bold uppercase tracking-[0.3em] mt-4">
+            Solusi Jasa Terpercaya
+          </p>
+        </motion.div>
+
+        {/* Loading Indicator */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8, duration: 0.5 }}
+          className="mt-16 w-48 h-1 bg-slate-100 rounded-full overflow-hidden relative"
+        >
+          <motion.div 
+            initial={{ x: '-100%' }}
+            animate={{ x: '200%' }}
+            transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+            className="absolute top-0 left-0 w-1/2 h-full bg-gradient-to-r from-transparent via-[#F27D26] to-transparent rounded-full"
+          />
+        </motion.div>
+      </div>
     </motion.div>
   );
 };
@@ -291,30 +321,7 @@ const BottomNav = ({ activePage, onNav, onAdd, userRole }: { activePage: Page, o
   );
 };
 
-const PageHeader = ({ title, subtitle, onBack }: { title: string, subtitle?: string, onBack?: () => void }) => (
-  <header className="bg-white text-slate-800 pt-5 pb-5 px-6 border-b border-slate-100 relative overflow-hidden">
-    <div className="relative z-10 flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        {onBack && (
-          <motion.button 
-            whileTap={{ scale: 0.9 }}
-            onClick={onBack} 
-            className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-600 border border-slate-100"
-          >
-            <ArrowLeft size={18} strokeWidth={2.5} />
-          </motion.button>
-        )}
-        <div>
-          <h1 className="text-xl font-black tracking-tighter italic leading-none text-primary">{title}</h1>
-          {subtitle && <p className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.1em] mt-1.5">{subtitle}</p>}
-        </div>
-      </div>
-      <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-600 border border-slate-100">
-        <Bell size={18} />
-      </div>
-    </div>
-  </header>
-);
+
 
 const LocationModal = ({ 
   isOpen, 
@@ -412,6 +419,20 @@ const LocationModal = ({
                   </div>
                 </button>
 
+                {/* Semua Lokasi */}
+                <button 
+                  onClick={() => onSelect('Indonesia')}
+                  className="w-full px-6 py-4 flex items-start gap-4 hover:bg-slate-50 transition-colors border-b border-slate-100 group"
+                >
+                  <div className="mt-1 p-2 bg-primary/5 rounded-full text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                    <MapPin size={20} />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-bold text-primary">Semua Lokasi</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">Tampilkan jasa dari seluruh Indonesia</p>
+                  </div>
+                </button>
+
                 {/* Saat Ini Digunakan */}
                 <div className="px-6 py-6">
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Saat Ini Digunakan</h4>
@@ -488,6 +509,42 @@ export default function App() {
     const saved = localStorage.getItem('userRole');
     return (saved as 'tamu' | 'mitra' | 'admin') || null;
   });
+
+  const PageHeader = ({ title, subtitle, onBack }: { title: string, subtitle?: string, onBack?: () => void }) => (
+    <header className="bg-white text-slate-800 pt-5 pb-5 px-6 border-b border-slate-100 relative overflow-hidden">
+      <div className="relative z-10 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          {onBack && (
+            <motion.button 
+              whileTap={{ scale: 0.9 }}
+              onClick={onBack} 
+              className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-600 border border-slate-100"
+            >
+              <ArrowLeft size={18} strokeWidth={2.5} />
+            </motion.button>
+          )}
+          <div>
+            <h1 className="text-xl font-black tracking-tighter italic leading-none text-primary">{title}</h1>
+            {subtitle && <p className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.1em] mt-1.5">{subtitle}</p>}
+          </div>
+        </div>
+        <div 
+          className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-600 border border-slate-100 relative cursor-pointer active:scale-95 transition-transform"
+          onClick={() => {
+            setShowNotifDropdown(!showNotifDropdown);
+            if (!showNotifDropdown) markNotifsAsRead();
+          }}
+        >
+          <Bell size={18} />
+          {unreadNotifCount > 0 && (
+            <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 border-2 border-white rounded-full flex items-center justify-center">
+              <span className="text-[7px] text-white font-bold">{unreadNotifCount}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userChats, setUserChats] = useState<any[]>([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -508,7 +565,7 @@ export default function App() {
   const [selectedCat, setSelectedCat] = useState<CategoryId>('all');
   const [selectedSub, setSelectedSub] = useState<string>('all');
   const [bookingService, setBookingService] = useState<Service | null>(null);
-  const [chatMitra, setChatMitra] = useState<{ id: string, name: string, serviceTitle?: string } | null>(null);
+  const [chatMitra, setChatMitra] = useState<{ id: string, name: string, serviceTitle?: string, serviceId?: string } | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [showDealModal, setShowDealModal] = useState(false);
@@ -517,6 +574,7 @@ export default function App() {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [activeDeal, setActiveDeal] = useState<any>(null);
   const [selectedMitra, setSelectedMitra] = useState<any>(null);
+  const [mitraReviews, setMitraReviews] = useState<any[]>([]);
   const [experiences, setExperiences] = useState([{ id: 1, company: '', position: '', start: '', end: '', desc: '' }]);
   const [adImage, setAdImage] = useState<string | null>(null);
   const [adProvince, setAdProvince] = useState('Jawa Barat');
@@ -528,6 +586,9 @@ export default function App() {
   const [adPrice, setAdPrice] = useState('');
   const [adDesc, setAdDesc] = useState('');
   const [adServicePolicy, setAdServicePolicy] = useState('Bisa bawa Alat & Material');
+  const [adCoverageAreas, setAdCoverageAreas] = useState<string[]>([]);
+  const [adSkills, setAdSkills] = useState<string[]>([]);
+  const [newSkill, setNewSkill] = useState('');
   const [bookingName, setBookingName] = useState('');
   const [bookingAddress, setBookingAddress] = useState('');
   const [bookingDesc, setBookingDesc] = useState('');
@@ -630,35 +691,80 @@ export default function App() {
   const [verificationId, setVerificationId] = useState('');
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [userAddress, setUserAddress] = useState<string>('');
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [tempAddress, setTempAddress] = useState('');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        // Check if user is a mitra and get status
-        const mitraDoc = await getDoc(doc(db, 'mitras', currentUser.uid));
-        if (mitraDoc.exists()) {
-          const data = mitraDoc.data();
-          setMitraStatus(data.status || 'pending');
-          setIsMitra(true);
-          setUserRole('mitra');
-          localStorage.setItem('userRole', 'mitra');
-        } else {
-          setMitraStatus(null);
-          setIsMitra(false);
-          // If not mitra, check if admin or tamu
-          const savedRole = localStorage.getItem('userRole');
-          if (savedRole === 'admin') {
-            setUserRole('admin');
+        try {
+          // 1. Check if user exists in 'users' collection
+          const userRef = doc(db, 'users', currentUser.uid);
+          const userDoc = await getDoc(userRef);
+          
+          let currentRole = 'pelanggan'; // Default role
+          
+          if (!userDoc.exists()) {
+            // 2. If not exists, automatically create it
+            await setDoc(userRef, {
+              role: 'pelanggan',
+              email: currentUser.email || '',
+              name: currentUser.displayName || 'Pengguna',
+              createdAt: serverTimestamp()
+            });
+            setUserAddress('');
           } else {
-            setUserRole('tamu');
-            localStorage.setItem('userRole', 'tamu');
+            const userData = userDoc.data();
+            currentRole = userData.role || 'pelanggan';
+            setUserAddress(userData.address || '');
           }
+
+          // 3. Check if user is also a registered mitra
+          const mitraDoc = await getDoc(doc(db, 'mitras', currentUser.uid));
+          if (mitraDoc.exists()) {
+            const mitraData = mitraDoc.data();
+            setMitraStatus(mitraData.status || 'pending');
+            setIsMitra(true);
+            currentRole = 'mitra'; // Override role to mitra
+            setUserAddress(mitraData.address || '');
+          } else {
+            setMitraStatus(null);
+            setIsMitra(false);
+          }
+
+          // 4. Gatekeeper Logic: Set state based on final role
+          if (currentRole === 'admin') {
+            setUserRole('admin');
+            localStorage.setItem('userRole', 'admin');
+          } else if (currentRole === 'mitra') {
+            setUserRole('mitra');
+            localStorage.setItem('userRole', 'mitra');
+          } else {
+            setUserRole('pelanggan');
+            localStorage.setItem('userRole', 'pelanggan');
+          }
+
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          // Fallback to pelanggan if error occurs
+          setUserRole('pelanggan');
+          localStorage.setItem('userRole', 'pelanggan');
         }
       } else {
         setMitraStatus(null);
         setIsMitra(false);
-        setUserRole(null);
+        
+        // Preserve admin role if logged in via hardcoded admin credentials
+        const savedRole = localStorage.getItem('userRole');
+        if (savedRole === 'admin') {
+          setUserRole('admin');
+        } else {
+          setUserRole(null);
+        }
+        
+        setUserAddress('');
       }
     });
     return () => unsubscribe();
@@ -677,8 +783,27 @@ export default function App() {
         
         // Sort client-side to avoid index requirements
         ads.sort((a, b) => {
-          const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-          const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+          let timeA = 0;
+          if (a.createdAt) {
+            if (typeof a.createdAt.toMillis === 'function') timeA = a.createdAt.toMillis();
+            else if (a.createdAt instanceof Date) timeA = a.createdAt.getTime();
+            else if (typeof a.createdAt === 'number') timeA = a.createdAt;
+            else if (typeof a.createdAt === 'string') timeA = new Date(a.createdAt).getTime();
+          } else {
+            // If createdAt is null (e.g. pending server timestamp), treat it as very new
+            timeA = Date.now();
+          }
+          
+          let timeB = 0;
+          if (b.createdAt) {
+            if (typeof b.createdAt.toMillis === 'function') timeB = b.createdAt.toMillis();
+            else if (b.createdAt instanceof Date) timeB = b.createdAt.getTime();
+            else if (typeof b.createdAt === 'number') timeB = b.createdAt;
+            else if (typeof b.createdAt === 'string') timeB = new Date(b.createdAt).getTime();
+          } else {
+            timeB = Date.now();
+          }
+          
           return timeB - timeA;
         });
         
@@ -708,33 +833,33 @@ export default function App() {
   useEffect(() => {
     if (!isFirebaseConfigured) return;
     
-    try {
-      const q = query(collection(db, 'mitras'), where('isFeatured', '==', true));
-      const unsubscribe = onSnapshot(q, (snapshot) => {
+    const fetchMitras = async () => {
+      try {
+        const q = query(collection(db, 'mitras'), where('isFeatured', '==', true));
+        const snapshot = await getDocs(q);
         const mitras = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
         setFeaturedMitras(mitras);
-      }, (error) => {
+      } catch (error: any) {
         if (error.code === 'permission-denied') {
-          console.warn("Firestore mitras listener: Permission denied.");
+          console.warn("Firestore mitras fetch: Permission denied.");
         } else {
-          console.error("Firestore mitras listener failed:", error);
+          console.error("Failed to fetch featured mitras:", error);
         }
-      });
-      return () => unsubscribe();
-    } catch (error) {
-      console.error("Failed to fetch featured mitras:", error);
-    }
+      }
+    };
+    fetchMitras();
   }, []);
 
   useEffect(() => {
     if (!isFirebaseConfigured) return;
     
-    try {
-      const q = query(collection(db, 'banners'), orderBy('createdAt', 'desc'));
-      const unsubscribe = onSnapshot(q, (snapshot) => {
+    const fetchBanners = async () => {
+      try {
+        const q = query(collection(db, 'banners'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
         const bns = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
@@ -742,17 +867,15 @@ export default function App() {
         setBanners(bns.length > 0 ? bns : [
           { id: 'default-2', name: 'Jaminan Keamanan Verified', img: 'https://images.unsplash.com/photo-1582139329536-e7284fece509?w=800', desc: 'Transaksi Aman & Terpercaya', color: 'from-primary to-primary-light', page: 'jaminan-keamanan', btn: 'Pelajari Lebih Lanjut' }
         ]);
-      }, (error) => {
+      } catch (error: any) {
         if (error.code === 'permission-denied') {
-          console.warn("Firestore banners listener: Permission denied.");
+          console.warn("Firestore banners fetch: Permission denied.");
         } else {
-          console.error("Firestore banners listener failed:", error);
+          console.error("Failed to fetch banners:", error);
         }
-      });
-      return () => unsubscribe();
-    } catch (error) {
-      console.error("Failed to fetch banners:", error);
-    }
+      }
+    };
+    fetchBanners();
   }, []);
 
   useEffect(() => {
@@ -793,21 +916,38 @@ export default function App() {
     }
     
     try {
+      // Listen to transactions where mitra is the user
       const q = query(
-        collection(db, 'orders'),
-        where('mitraId', '==', user.uid),
+        collection(db, 'transactions'),
+        where('mitraID', '==', user.uid),
         orderBy('createdAt', 'desc')
       );
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const orders = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+      
+      const unsubscribe = onSnapshot(q, async (snapshot) => {
+        const orders = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            // Map transaction fields to order fields for UI compatibility
+            serviceTitle: data.serviceTitle || 'Layanan Jasa',
+            customerName: data.customerName || 'Pelanggan',
+            customerPhone: data.customerPhone || '',
+            date: data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Baru saja'
+          };
+        });
         setMitraOrders(orders);
+      }, (error) => {
+        if (error.code === 'permission-denied') {
+          console.warn("Firestore mitra orders listener: Permission denied.");
+        } else {
+          console.error("Failed to listen to mitra orders:", error);
+        }
       });
+      
       return () => unsubscribe();
     } catch (error) {
-      console.error("Failed to fetch mitra orders:", error);
+      console.error("Failed to setup mitra orders listener:", error);
     }
   }, [user]);
 
@@ -824,23 +964,42 @@ export default function App() {
         where('recipientId', '==', user.uid),
         orderBy('createdAt', 'desc')
       );
+      
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const notifs = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
+        
+        // Check for new payment_success notifications to play sound
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'added') {
+            const data = change.doc.data();
+            if (data.type === 'payment_success' && !data.isRead) {
+              try {
+                // Play a short notification sound
+                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                audio.play().catch(e => console.log('Audio play failed:', e));
+              } catch (e) {
+                // Ignore audio errors
+              }
+            }
+          }
+        });
+        
         setNotifications(notifs);
         setUnreadNotifCount(notifs.filter((n: any) => !n.isRead).length);
       }, (error) => {
         if (error.code === 'permission-denied') {
           console.warn("Firestore notifications listener: Permission denied.");
         } else {
-          console.error("Firestore notifications listener failed:", error);
+          console.error("Failed to listen to notifications:", error);
         }
       });
+      
       return () => unsubscribe();
     } catch (error) {
-      console.error("Failed to fetch notifications:", error);
+      console.error("Failed to setup notifications listener:", error);
     }
   }, [user]);
 
@@ -854,6 +1013,9 @@ export default function App() {
           isRead: true
         });
       }
+      // Optimistically update UI
+      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+      setUnreadNotifCount(0);
     } catch (error) {
       console.error("Error marking notifications as read:", error);
     }
@@ -865,26 +1027,25 @@ export default function App() {
       return;
     }
     
-    try {
-      const q = query(collection(db, 'transactions'), orderBy('createdAt', 'desc'));
-      const unsubscribe = onSnapshot(q, (snapshot) => {
+    const fetchTransactions = async () => {
+      try {
+        const q = query(collection(db, 'transactions'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
         const transList = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as Transaction[];
         setTransactions(transList);
-      }, (error) => {
+      } catch (error: any) {
         if (error.code === 'permission-denied') {
-          console.warn("Firestore transactions listener: Permission denied.");
+          console.warn("Firestore transactions fetch: Permission denied.");
         } else {
-          console.error("Firestore transactions listener failed:", error);
+          console.error("Failed to fetch transactions:", error);
         }
-      });
-      return () => unsubscribe();
-    } catch (error) {
-      console.error("Failed to setup Firestore transactions listener:", error);
-    }
-  }, [user]);
+      }
+    };
+    fetchTransactions();
+  }, [user, activePage]);
 
   useEffect(() => {
     if (!chatMitra || !isFirebaseConfigured || !user) {
@@ -916,30 +1077,29 @@ export default function App() {
   useEffect(() => {
     if (!isFirebaseConfigured || !user || userRole !== 'admin') return;
 
-    try {
-      const q = query(
-        collection(db, 'payments'),
-        where('status', '==', 'pending'),
-        orderBy('createdAt', 'desc')
-      );
-      const unsubscribe = onSnapshot(q, (snapshot) => {
+    const fetchPendingPayments = async () => {
+      try {
+        const q = query(
+          collection(db, 'payments'),
+          where('status', '==', 'pending'),
+          orderBy('createdAt', 'desc')
+        );
+        const snapshot = await getDocs(q);
         const paymentsData = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as Payment[];
         setPendingPayments(paymentsData);
-      }, (error) => {
+      } catch (error: any) {
         if (error.code === 'permission-denied') {
-          console.warn("Firestore payments listener: Permission denied.");
+          console.warn("Firestore payments fetch: Permission denied.");
         } else {
-          console.error("Firestore payments listener failed:", error);
+          console.error("Failed to fetch payments:", error);
         }
-      });
-      return () => unsubscribe();
-    } catch (error) {
-      console.error("Failed to setup payments listener:", error);
-    }
-  }, [user, userRole]);
+      }
+    };
+    fetchPendingPayments();
+  }, [user, userRole, activePage]);
 
   const verifyPayment = async (payment: Payment) => {
     if (!user) return;
@@ -965,6 +1125,16 @@ export default function App() {
         content: `✅ Pembayaran DP 10% sebesar Rp ${payment.dpAmount.toLocaleString()} telah diverifikasi. Pekerjaan dapat dimulai.`,
         time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
         timestamp: serverTimestamp()
+      });
+
+      // Send payment_success notification to Mitra
+      await addDoc(collection(db, 'notifications'), {
+        recipientId: payment.mitraId,
+        title: 'Pembayaran DP Diverifikasi!',
+        message: `Pelanggan sudah bayar DP 10%.\nSilahkan hubungi pelanggan\nSelamat bekerja dan semangat demi keluarga ❤️`,
+        type: 'payment_success',
+        isRead: false,
+        createdAt: serverTimestamp()
       });
 
       alert('Pembayaran berhasil diverifikasi!');
@@ -1007,25 +1177,25 @@ export default function App() {
     }
   }, [messages]);
 
+  const formatPrice = (price: any) => {
+    if (!price) return '0';
+    const num = typeof price === 'string' ? parseInt(price.replace(/\D/g, ''), 10) : price;
+    return isNaN(num) ? '0' : num.toLocaleString('id-ID');
+  };
+
   const filteredServices = services.filter(s => {
-    if (s.status !== 'aktif') return false;
+    // Only show active ads (loose check)
+    if (s.status !== 'aktif' && s.status !== 'active') return false;
     
     const title = s.title || '';
-    const cat = s.cat || '';
-    const subcat = s.subcat || '';
-    const location = s.location || '';
+    const adCat = (s.category || s.cat || '').toLowerCase();
     
     const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCat = selectedCat === 'all' || cat === selectedCat;
-    const matchesSub = selectedSub === 'all' || subcat === selectedSub;
+    const matchesCat = selectedCat === 'all' || adCat === selectedCat.toLowerCase();
     
-    let matchesLocation = true;
-    if (selectedLocation !== 'Indonesia') {
-      matchesLocation = location.toLowerCase().includes(selectedLocation.toLowerCase()) || 
-                        selectedLocation.toLowerCase().includes(location.toLowerCase());
-    }
+    // Removed strict subcategory and location filters to ensure ads show up
     
-    return matchesSearch && matchesCat && matchesSub && matchesLocation;
+    return matchesSearch && matchesCat;
   });
 
   const handleLogin = async () => {
@@ -1118,6 +1288,22 @@ export default function App() {
       navigateTo('login');
     } catch (error: any) {
       alert('Pendaftaran gagal: ' + error.message);
+    }
+  };
+
+  const handleSaveAddress = async () => {
+    if (!user) return;
+    try {
+      if (isMitra) {
+        await updateDoc(doc(db, 'mitras', user.uid), { address: tempAddress });
+      } else {
+        await setDoc(doc(db, 'users', user.uid), { address: tempAddress }, { merge: true });
+      }
+      setUserAddress(tempAddress);
+      setIsEditingAddress(false);
+      alert('Alamat berhasil disimpan!');
+    } catch (error: any) {
+      alert('Gagal menyimpan alamat: ' + error.message);
     }
   };
 
@@ -1258,6 +1444,10 @@ export default function App() {
   };
 
   const navigateTo = (page: Page) => {
+    if (page === 'beranda') {
+      setSelectedCat('all');
+      setSelectedSub('all');
+    }
     setPrevPage(activePage);
     setActivePage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1265,9 +1455,15 @@ export default function App() {
 
   const handleBack = () => {
     if (prevPage) {
+      if (prevPage === 'beranda') {
+        setSelectedCat('all');
+        setSelectedSub('all');
+      }
       setActivePage(prevPage);
       setPrevPage(null);
     } else {
+      setSelectedCat('all');
+      setSelectedSub('all');
       setActivePage('beranda');
     }
   };
@@ -1304,6 +1500,8 @@ export default function App() {
     setAdProvince(ad.province || 'Jawa Barat');
     setAdCity(ad.city || '');
     setAdDistrict(ad.district || '');
+    setAdCoverageAreas(ad.coverageAreas || []);
+    setAdSkills(ad.skills || []);
     setShowAdModal(true);
   };
 
@@ -1318,35 +1516,75 @@ export default function App() {
     }
   };
 
-  const openMitraProfile = async (service: Service) => {
+  const openMitraProfile = async (service: any) => {
     if (!service.mitraId) {
       alert('Data mitra tidak ditemukan.');
       return;
     }
     try {
-      const mitraDoc = await getDoc(doc(db, 'mitras', service.mitraId));
-      if (mitraDoc.exists()) {
-        const data = mitraDoc.data();
+      let mitraData: any = null;
+      try {
+        const mitraDoc = await getDoc(doc(db, 'mitras', service.mitraId));
+        if (mitraDoc.exists()) {
+          mitraData = mitraDoc.data();
+        }
+      } catch (err: any) {
+        console.warn("Could not fetch mitra doc, using fallback data:", err);
+      }
+
+      if (mitraData) {
         setSelectedMitra({
           id: service.mitraId,
-          name: data.namaUsaha || data.namaLengkap || service.mitraName || 'Mitra',
-          foto: data.fotoProfil || service.img,
-          lokasi: data.city || 'Lokasi tidak diketahui',
-          tentang: data.bio || 'Belum ada deskripsi profil.',
-          alamatLengkap: data.alamatLengkap || 'Alamat tidak tersedia',
-          phone: data.phone || '-',
-          jenisMitra: data.jenisMitra || '-',
-          statusKeahlian: data.statusKeahlian || '-',
-          pengalaman: data.pengalaman || 0,
-          proyek: data.proyekSelesai || 0,
-          kepuasan: data.rating ? `${(data.rating * 20)}%` : '0%',
-          rating: data.rating || 0,
-          layanan: data.layanan || [service.category]
+          name: mitraData.namaUsaha || mitraData.namaLengkap || service.mitraName || 'Mitra',
+          foto: mitraData.fotoProfil || service.img,
+          lokasi: mitraData.city || 'Lokasi tidak diketahui',
+          tentang: mitraData.bio || 'Belum ada deskripsi profil.',
+          alamatLengkap: mitraData.address || mitraData.alamatLengkap || 'Alamat tidak tersedia',
+          phone: mitraData.phone || '-',
+          jenisMitra: mitraData.jenisMitra || '-',
+          statusKeahlian: mitraData.statusKeahlian || '-',
+          pengalaman: mitraData.pengalaman || 0,
+          proyek: mitraData.proyekSelesai || 0,
+          kepuasan: mitraData.rating ? `${(mitraData.rating * 20)}%` : '0%',
+          rating: mitraData.rating || 0,
+          layanan: mitraData.layanan || [service.category],
+          coverageAreas: mitraData.coverageAreas || service.coverageAreas || [],
+          skills: mitraData.skills || service.skills || []
         });
-        navigateTo('profil-mitra');
       } else {
-        alert('Profil mitra tidak ditemukan di database.');
+        // Fallback if mitra document is not accessible or doesn't exist
+        setSelectedMitra({
+          id: service.mitraId,
+          name: service.mitraName || 'Mitra',
+          foto: service.img,
+          lokasi: service.location || 'Lokasi tidak diketahui',
+          tentang: 'Belum ada deskripsi profil.',
+          alamatLengkap: 'Alamat tidak tersedia',
+          phone: '-',
+          jenisMitra: '-',
+          statusKeahlian: '-',
+          pengalaman: 0,
+          proyek: 0,
+          kepuasan: '0%',
+          rating: service.rating || 0,
+          layanan: [service.category],
+          coverageAreas: service.coverageAreas || [],
+          skills: service.skills || []
+        });
       }
+      
+      // Fetch reviews
+      try {
+        const reviewsQuery = query(collection(db, 'reviews'), where('mitraId', '==', service.mitraId));
+        const reviewsSnapshot = await getDocs(reviewsQuery);
+        const reviewsData = reviewsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setMitraReviews(reviewsData);
+      } catch (err: any) {
+        console.warn("Could not fetch reviews:", err);
+        setMitraReviews([]);
+      }
+      
+      navigateTo('profil-mitra');
     } catch (error) {
       console.error("Error fetching mitra profile:", error);
       alert('Gagal memuat profil mitra.');
@@ -1363,10 +1601,21 @@ export default function App() {
     }
   };
   const openDealModal = () => {
-    const price = 1000000; // Contoh harga deal
-    const jaminan = price * 0.1;
+    const trans = transactions.find(t => 
+      (t.customerID === user?.uid && t.mitraID === chatMitra?.id) ||
+      (t.mitraID === user?.uid && t.customerID === chatMitra?.id)
+    );
+
+    if (!trans) {
+      alert("Belum ada penawaran harga. Silakan minta mitra untuk mengirimkan penawaran terlebih dahulu.");
+      return;
+    }
+
+    setActiveTransaction(trans);
+    const price = trans.totalPrice;
+    const jaminan = trans.dpAmount;
     setActiveDeal({
-      jasa: chatMitra?.serviceTitle || 'Servis AC',
+      jasa: chatMitra?.serviceTitle || 'Layanan Jasa',
       mitra: chatMitra?.name || 'Mitra Jasa',
       total: price,
       jaminan: jaminan,
@@ -1385,8 +1634,10 @@ export default function App() {
     try {
       const dealContent = `✅ DEAL DISEPAKATI\nTotal: Rp ${activeDeal.total.toLocaleString()}\nJaminan 10%: Rp ${activeDeal.jaminan.toLocaleString()}`;
       
+      const chatId = [user.uid, chatMitra?.id || 'general'].sort().join('_');
+
       // Save to chat
-      await addDoc(collection(db, 'chats', chatMitra?.id || 'general', 'messages'), {
+      await addDoc(collection(db, 'chats', chatId, 'messages'), {
         sender: 'user',
         senderId: user.uid,
         type: 'text',
@@ -1396,19 +1647,13 @@ export default function App() {
         timestamp: serverTimestamp()
       });
 
-      // Save to orders
-      await addDoc(collection(db, 'orders'), {
-        customerId: user.uid,
-        customerName: user.displayName || 'Pengguna JasaMitra',
-        mitraId: chatMitra?.id,
-        mitraName: chatMitra?.name,
-        serviceTitle: activeDeal.jasa,
-        totalPrice: activeDeal.total,
-        jaminan: activeDeal.jaminan,
-        status: 'pending',
-        date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
-        timestamp: serverTimestamp()
-      });
+      // Update transaction status to deal_agreed
+      if (activeTransaction) {
+        await updateDoc(doc(db, 'transactions', activeTransaction.id), {
+          status: 'deal_agreed',
+          updatedAt: serverTimestamp()
+        });
+      }
 
       // Add notification for mitra
       await addDoc(collection(db, 'notifications'), {
@@ -1421,7 +1666,9 @@ export default function App() {
       });
 
       setShowDealModal(false);
-      alert('Pembayaran jaminan dikonfirmasi! Pesanan telah dikirim ke mitra.');
+      setPaymentAmount(activeDeal.total);
+      setShowPaymentModal(true);
+      alert('Silakan upload bukti TF untuk melanjutkan pesanan.');
     } catch (error: any) {
       alert('Gagal mengonfirmasi deal: ' + error.message);
     }
@@ -1454,7 +1701,10 @@ export default function App() {
       
       const transRef = await addDoc(collection(db, 'transactions'), {
         customerID: chatMitra.id, 
+        customerName: chatMitra.name || 'Pelanggan',
         mitraID: user.uid,
+        serviceTitle: chatMitra.serviceTitle || 'Layanan Jasa',
+        serviceId: chatMitra.serviceId || null,
         totalPrice: totalPrice,
         dpAmount: dpAmount,
         status: 'pending',
@@ -1530,16 +1780,29 @@ export default function App() {
       const mitraAmount = paymentAmount * 0.9;
       const chatId = [user.uid, chatMitra?.id || 'general'].sort().join('_');
 
+      // Fetch customer phone number
+      let customerPhone = '';
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        customerPhone = userDoc.data().wa || userDoc.data().phone || '';
+      }
+
       // Update transaction if exists
       if (activeTransaction) {
         await updateDoc(doc(db, 'transactions', activeTransaction.id), {
-          status: 'paid', // For demo, we mark as paid immediately after upload or wait for admin?
-          // The user said: "Jika status transaksi sudah 'paid', nomor WhatsApp dan alamat asli akan otomatis muncul"
-          // Usually 'paid' happens after admin verification. 
-          // But for this flow, let's assume 'paid' is the goal.
+          status: 'paid', // Mark as paid immediately
           proofUrl: paymentProofPreview,
+          customerPhone: customerPhone,
           updatedAt: serverTimestamp()
         });
+
+        // Deactivate the ad so it doesn't show on the homepage
+        if (activeTransaction.serviceId) {
+          await updateDoc(doc(db, 'iklan', activeTransaction.serviceId), {
+            status: 'nonaktif',
+            updatedAt: serverTimestamp()
+          }).catch(err => console.error("Failed to deactivate ad:", err));
+        }
       }
 
       await addDoc(collection(db, 'payments'), {
@@ -1559,14 +1822,14 @@ export default function App() {
       // Add notification for mitra
       await addDoc(collection(db, 'notifications'), {
         recipientId: chatMitra?.id || 'unknown',
-        title: 'Bukti Transfer Diunggah',
-        message: `${user.displayName || 'Pelanggan'} telah mengunggah bukti transfer DP.`,
-        type: 'payment',
+        title: 'Pembayaran DP Berhasil!',
+        message: `Pelanggan sudah bayar DP 10%.\nSilahkan hubungi pelanggan\nSelamat bekerja dan semangat demi keluarga ❤️`,
+        type: 'payment_success',
         isRead: false,
         createdAt: serverTimestamp()
       });
 
-      const content = `📤 BUKTI TRANSFER DIUNGGAL\nNominal Deal: Rp ${paymentAmount.toLocaleString()}\nDP 10%: Rp ${dpAmount.toLocaleString()}\nStatus: Menunggu Verifikasi Admin`;
+      const content = `📤 BUKTI TRANSFER DIUNGGAH\nNominal Deal: Rp ${paymentAmount.toLocaleString()}\nDP 10%: Rp ${dpAmount.toLocaleString()}\nStatus: Lunas (DP 10%)`;
 
       // Send message to chat
       await addDoc(collection(db, 'chats', chatId, 'messages'), {
@@ -1603,7 +1866,7 @@ export default function App() {
       });
 
       setShowPaymentModal(false);
-      alert('Bukti transfer berhasil diunggah! Mohon tunggu verifikasi admin.');
+      alert('Terima kasih atas kepercayaan anda, bukti dp akan kami sampaikan ke mitra');
     } catch (error: any) {
       alert('Gagal mengunggah pembayaran: ' + error.message);
     } finally {
@@ -1904,35 +2167,10 @@ export default function App() {
                 </motion.div>
               </div>
 
-              {/* Banners Toko Mitra (Carousel style with dots) */}
-              <section className="mb-8">
-                <div className="relative group">
-                  <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-5 px-5 snap-x snap-mandatory">
-                    {banners.map((banner) => (
-                      <motion.div 
-                        key={banner.id}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => banner.page && navigateTo(banner.page as Page)}
-                        className={`relative min-w-full h-40 rounded-2xl overflow-hidden shadow-md cursor-pointer group snap-center`}
-                      >
-                        <img src={banner.img} className="absolute inset-0 w-full h-full object-cover" alt={banner.name} referrerPolicy="no-referrer" />
-                        <div className={`absolute inset-0 bg-gradient-to-r ${banner.color || 'from-slate-800 to-slate-900'} opacity-70`} />
-                        <div className="absolute inset-0 p-6 flex flex-col justify-center text-white">
-                          <span className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 opacity-80">{banner.name}</span>
-                          <h3 className="text-xl font-black leading-tight mb-4 max-w-[70%]">{banner.desc}</h3>
-                          <div className="flex">
-                            <span className="bg-white text-slate-900 text-[8px] font-black px-4 py-2 rounded-lg uppercase tracking-wider shadow-lg">{banner.btn || 'Lihat Detail'}</span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                  {/* Pagination Dots */}
-                  <div className="flex justify-center gap-1.5 mt-1">
-                    {banners.map((_, i) => (
-                      <div key={i} className={`h-1.5 rounded-full transition-all ${i === 0 ? 'w-4 bg-primary' : 'w-1.5 bg-slate-200'}`} />
-                    ))}
-                  </div>
+              {/* Static Safety Protocol Banner */}
+              <section className="mb-5">
+                <div className="rounded-2xl overflow-hidden shadow-sm border border-slate-100 neo-3d">
+                  <img src="https://i.ibb.co.com/zhMNLMZ2/file-000000000ce0720885e11afeef41a414.png" alt="Protokol Keselamatan" className="w-full h-auto object-cover" />
                 </div>
               </section>
 
@@ -1960,64 +2198,132 @@ export default function App() {
                 </div>
               </section>
 
+              {/* Banners Toko Mitra (Carousel style with dots) */}
+              {(!user || userRole === 'tamu') && (
+                <section className="mb-8">
+                  <div className="relative group">
+                    <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-5 px-5 snap-x snap-mandatory">
+                      {banners.map((banner) => (
+                        <motion.div 
+                          key={banner.id}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => banner.page && navigateTo(banner.page as Page)}
+                          className={`relative min-w-full h-40 rounded-2xl overflow-hidden shadow-md cursor-pointer group snap-center`}
+                        >
+                          <img src={banner.img || undefined} className="absolute inset-0 w-full h-full object-cover" alt={banner.name} referrerPolicy="no-referrer" />
+                          <div className={`absolute inset-0 bg-gradient-to-r ${banner.color || 'from-slate-800 to-slate-900'} opacity-70`} />
+                          <div className="absolute inset-0 p-6 flex flex-col justify-center text-white">
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 opacity-80">{banner.name}</span>
+                            <h3 className="text-xl font-black leading-tight mb-4 max-w-[70%]">{banner.desc}</h3>
+                            <div className="flex">
+                              <span className="bg-white text-slate-900 text-[8px] font-black px-4 py-2 rounded-lg uppercase tracking-wider shadow-lg">{banner.btn || 'Lihat Detail'}</span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                    {/* Pagination Dots */}
+                    <div className="flex justify-center gap-1.5 mt-1">
+                      {banners.map((_, i) => (
+                        <div key={i} className={`h-1.5 rounded-full transition-all ${i === 0 ? 'w-4 bg-primary' : 'w-1.5 bg-slate-200'}`} />
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              )}
+
               {/* Mitra Unggulan (Featured Partners) */}
               <section className="mb-10">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-base font-bold text-slate-800 tracking-tight">Mitra Unggulan</h2>
                   <button className="text-[10px] font-bold text-primary uppercase tracking-widest">Lihat Semua</button>
                 </div>
-                <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-5 px-5">
-                  {featuredMitras.length === 0 ? (
-                    <div className="w-full py-10 text-center bg-white rounded-2xl border border-dashed border-slate-200">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Belum ada mitra unggulan</p>
+                <div className="flex gap-3 overflow-x-auto pb-4 hide-scrollbar -mx-5 px-5">
+                  {[...services.filter(s => s.isHighlight === true), ...Array(10)].slice(0, 10).map((slot, i) => slot ? (
+                    <div 
+                      key={`highlight-${slot.id || i}`} 
+                      className="min-w-[150px] max-w-[150px] bg-[#FFFAF0] rounded-xl border-2 border-[#FACC15] overflow-hidden flex flex-col shrink-0 cursor-pointer snap-start"
+                      onClick={() => {
+                        setSelectedMitra(slot);
+                        navigateTo('profil-mitra');
+                      }}
+                    >
+                      {/* Image Area */}
+                      <div className="h-28 bg-slate-200 relative">
+                        <img src={slot.img || slot.foto || `https://picsum.photos/seed/${slot.id}/150/150`} alt={slot.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        {/* Heart Icon */}
+                        <div className="absolute top-2 right-2 w-7 h-7 bg-black/40 rounded-full flex items-center justify-center backdrop-blur-sm">
+                          <Heart size={14} className="text-white" />
+                        </div>
+                      </div>
+                      
+                      {/* Highlight Bar */}
+                      <div className="bg-[#FACC15] py-1 flex items-center justify-center gap-1">
+                        <Zap size={12} className="text-black fill-black" />
+                        <span className="text-[11px] font-bold text-black">Highlight</span>
+                      </div>
+                      
+                      {/* Content Area */}
+                      <div className="p-2.5 flex flex-col flex-1">
+                        <h3 className="text-[11px] font-bold text-slate-800 line-clamp-1 mb-0.5">{slot.title}</h3>
+                        <p className="text-[13px] font-black text-primary mb-3">Rp {formatPrice(slot.price)}</p>
+                        
+                        <div className="mt-auto">
+                          <p className="text-[10px] font-bold text-slate-700 line-clamp-1">{slot.mitraName || 'Mitra'}</p>
+                          <p className="text-[9px] text-slate-500 mt-0.5 line-clamp-1">{slot.subcat || slot.category || 'Keahlian Spesifik'}</p>
+                        </div>
+                      </div>
                     </div>
                   ) : (
-                    featuredMitras.map((mitra) => (
-                      <motion.div 
-                        key={mitra.id} 
-                        whileHover={{ y: -8 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                          setSelectedMitra(mitra);
-                          navigateTo('profil-mitra');
-                        }}
-                        className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 cursor-pointer min-w-[170px] max-w-[170px] relative group"
-                      >
-                        <div className="absolute top-2.5 right-2.5 z-10 bg-white/95 backdrop-blur-md px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm border border-slate-100">
-                          <Star size={10} className="text-accent fill-accent" />
-                          <span className="text-[10px] font-black text-slate-800">{mitra.rating || 5.0}</span>
+                    <div 
+                      key={`highlight-empty-${i}`} 
+                      className="min-w-[150px] max-w-[150px] bg-[#FFFAF0] rounded-xl border-2 border-[#FACC15] overflow-hidden flex flex-col shrink-0 cursor-pointer snap-start"
+                      onClick={() => alert('Hubungi admin untuk memesan posisi Highlight ini.')}
+                    >
+                      {/* Image Area */}
+                      <div className="h-28 bg-slate-200 relative">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-100">
+                          <ImageIcon size={24} className="mb-1 opacity-50" />
+                          <span className="text-[9px] font-medium px-2 text-center">Space Iklan Tersedia</span>
                         </div>
-                        <div className="h-28 overflow-hidden relative">
-                          <img src={mitra.img || mitra.foto} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={mitra.name} referrerPolicy="no-referrer" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                        {/* Heart Icon */}
+                        <div className="absolute top-2 right-2 w-7 h-7 bg-black/40 rounded-full flex items-center justify-center backdrop-blur-sm">
+                          <Heart size={14} className="text-white" />
                         </div>
-                        <div className="p-3">
-                          <div className="flex items-center gap-1 mb-1">
-                            <h3 className="text-[11px] font-bold text-slate-800 truncate">{mitra.name}</h3>
-                            <ShieldCheck size={10} className="text-primary shrink-0" />
-                          </div>
-                          <p className="text-[9px] text-slate-400 font-medium line-clamp-1 mb-3">{mitra.desc || mitra.kategori}</p>
-                          <button className="w-full bg-slate-50 hover:bg-primary hover:text-white text-primary text-[9px] font-bold py-2 rounded-lg transition-colors border border-primary/10">
-                            Lihat Profil
-                          </button>
+                      </div>
+                      
+                      {/* Highlight Bar */}
+                      <div className="bg-[#FACC15] py-1 flex items-center justify-center gap-1">
+                        <Zap size={12} className="text-black fill-black" />
+                        <span className="text-[11px] font-bold text-black">Highlight</span>
+                      </div>
+                      
+                      {/* Content Area */}
+                      <div className="p-2.5 flex flex-col flex-1">
+                        <h3 className="text-[11px] text-slate-700 line-clamp-1 mb-0.5">Pesan posisi ini</h3>
+                        <p className="text-[13px] font-black text-slate-800 mb-3">Rp ---</p>
+                        
+                        <div className="mt-auto">
+                          <p className="text-[10px] font-bold text-slate-700 line-clamp-1">Mitra Unggulan</p>
+                          <p className="text-[9px] text-slate-400 mt-0.5">Tersedia</p>
                         </div>
-                      </motion.div>
-                    ))
-                  )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </section>
 
               {/* Home Service List (Recommendations Only) */}
               <section className="mb-8">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-slate-800">Rekomendasi Untukmu</h2>
+                  <h2 className="text-lg font-bold text-slate-800">Rekomendasi Jasa</h2>
                 </div>
-                <div className="space-y-4">
-                  {filteredServices.length > 0 ? filteredServices.slice(0, 5).map((service) => (
+                <div className="grid grid-cols-2 gap-3">
+                  {filteredServices.length > 0 ? filteredServices.slice(0, 6).map((service) => (
                     <motion.div 
                       key={service.id}
                       whileTap={{ scale: 0.98 }}
-                      className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex gap-4 neo-3d cursor-pointer"
+                      className="bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col overflow-hidden neo-3d cursor-pointer"
                       onClick={() => {
                         if (service.mitraId === user?.uid) {
                           navigateTo('iklan-saya');
@@ -2026,37 +2332,31 @@ export default function App() {
                         }
                       }}
                     >
-                      <img 
-                        src={service.img} 
-                        alt={service.title}
-                        className="w-20 h-20 rounded-2xl object-cover shadow-inner"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="flex-1 flex flex-col justify-between">
-                        <div>
-                          <h3 className="text-sm font-bold text-slate-800 line-clamp-1">{service.title}</h3>
-                          <div className="flex items-center gap-1 mt-1">
-                            <Star size={12} className="text-accent fill-accent" />
-                            <span className="text-[10px] font-bold text-slate-600">{service.rating}</span>
-                          </div>
+                      <div className="relative aspect-square w-full">
+                        <img 
+                          src={service.img || undefined} 
+                          alt={service.title}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
+                          <Star size={10} className="text-accent fill-accent" />
+                          <span className="text-[9px] font-bold text-slate-700">{service.rating}</span>
                         </div>
-                        <div className="flex items-center justify-between mt-2">
-                          <span className="text-sm font-extrabold text-primary">{service.price}</span>
-                          {service.mitraId === user?.uid ? (
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); navigateTo('iklan-saya'); }}
-                              className="bg-slate-400 text-white text-[10px] font-bold px-4 py-2 rounded-xl shadow-lg shadow-slate-200 active:scale-95 transition-transform"
-                            >
-                              IKLAN SAYA
-                            </button>
-                          ) : (
-                            <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Detail</span>
-                          )}
+                      </div>
+                      <div className="p-3 flex flex-col flex-1">
+                        <h3 className="text-[11px] font-bold text-slate-800 line-clamp-2 leading-snug mb-2">{service.title}</h3>
+                        <div className="mt-auto flex flex-col gap-1.5">
+                          <span className="text-sm font-black text-primary">Rp {formatPrice(service.price)}</span>
+                          <div className="flex items-center gap-1 text-slate-400 border-t border-slate-50 pt-2">
+                            <ShieldCheck size={12} className="text-blue-500 shrink-0" />
+                            <span className="text-[9px] font-bold truncate">{service.mitraName || 'Mitra Jasa'}</span>
+                          </div>
                         </div>
                       </div>
                     </motion.div>
                   )) : (
-                    <div className="text-center py-10 bg-white rounded-3xl border border-dashed border-slate-200">
+                    <div className="col-span-2 text-center py-10 bg-white rounded-3xl border border-dashed border-slate-200">
                       <p className="text-xs text-slate-400 italic">Tidak ada jasa di lokasi ini.</p>
                     </div>
                   )}
@@ -2178,14 +2478,75 @@ export default function App() {
           <motion.div key="alamat-saya" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             <PageHeader title="Alamat Saya" subtitle="Kelola alamat pengiriman" onBack={handleBack} />
             <main className="px-6 pt-6 space-y-4">
-              <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 text-center py-12">
-                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mx-auto mb-4">
-                  <MapPin size={32} />
+              {isEditingAddress ? (
+                <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 space-y-4">
+                  <h3 className="text-sm font-bold text-slate-800 mb-2">Edit Alamat</h3>
+                  <textarea 
+                    value={tempAddress}
+                    onChange={(e) => setTempAddress(e.target.value)}
+                    placeholder="Masukkan alamat lengkap Anda..."
+                    className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none min-h-[120px] focus:ring-2 ring-primary/20"
+                  />
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={() => setIsEditingAddress(false)}
+                      className="flex-1 py-4 text-slate-400 font-bold text-sm"
+                    >
+                      Batal
+                    </button>
+                    <button 
+                      onClick={handleSaveAddress}
+                      className="flex-[2] bg-primary text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-primary/30"
+                    >
+                      Simpan
+                    </button>
+                  </div>
                 </div>
-                <h3 className="text-sm font-bold text-slate-800">Belum Ada Alamat</h3>
-                <p className="text-xs font-medium text-slate-400 mt-2">Anda belum menambahkan alamat pengiriman.</p>
-              </div>
-              <button className="w-full py-6 border-2 border-dashed border-slate-200 rounded-[40px] text-slate-400 font-bold text-xs flex items-center justify-center gap-2"><Plus size={20} /> Tambah Alamat Baru</button>
+              ) : (
+                <>
+                  {userAddress ? (
+                    <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 flex items-start gap-4">
+                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary shrink-0">
+                        <MapPin size={24} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="text-sm font-bold text-slate-800">Alamat Utama</h3>
+                          <button 
+                            onClick={() => {
+                              setTempAddress(userAddress);
+                              setIsEditingAddress(true);
+                            }}
+                            className="text-primary text-xs font-bold"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                        <p className="text-xs font-medium text-slate-500 leading-relaxed">{userAddress}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 text-center py-12">
+                      <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mx-auto mb-4">
+                        <MapPin size={32} />
+                      </div>
+                      <h3 className="text-sm font-bold text-slate-800">Belum Ada Alamat</h3>
+                      <p className="text-xs font-medium text-slate-400 mt-2">Anda belum menambahkan alamat pengiriman.</p>
+                    </div>
+                  )}
+                  {!userAddress && (
+                    <button 
+                      onClick={() => {
+                        setTempAddress('');
+                        setIsEditingAddress(true);
+                      }}
+                      className="w-full py-6 border-2 border-dashed border-slate-200 rounded-[40px] text-slate-400 font-bold text-xs flex items-center justify-center gap-2"
+                    >
+                      <Plus size={20} /> Tambah Alamat Baru
+                    </button>
+                  )}
+                </>
+              )}
             </main>
           </motion.div>
         )}
@@ -2199,7 +2560,7 @@ export default function App() {
                 {myAds.map(ad => (
                   <div key={ad.id} className={`bg-white p-4 rounded-[32px] shadow-sm border border-slate-100 neo-3d ${ad.status === 'nonaktif' ? 'opacity-60 grayscale' : ''}`}>
                     <div className="flex gap-4">
-                      <img src={ad.img} className="w-20 h-20 rounded-2xl object-cover shadow-inner" />
+                      <img src={ad.img || undefined} className="w-20 h-20 rounded-2xl object-cover shadow-inner" />
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
                           <h3 className="text-sm font-bold text-slate-800">{ad.title}</h3>
@@ -2208,7 +2569,7 @@ export default function App() {
                         <p className="text-[10px] font-bold text-slate-400 mt-1">
                           {CATEGORIES.find(c => c.id === ad.cat)?.name} • {SUB_CATEGORIES[ad.cat]?.find(s => s.id === ad.subcat)?.nama || ad.subcat}
                         </p>
-                        <p className="text-xs font-extrabold text-primary mt-2">{ad.price}</p>
+                        <p className="text-xs font-extrabold text-primary mt-2">Rp {formatPrice(ad.price)}</p>
                       </div>
                     </div>
                     <div className="flex gap-2 mt-4 pt-4 border-t border-slate-50">
@@ -2247,14 +2608,18 @@ export default function App() {
             exit={{ opacity: 0, scale: 1.05 }}
           >
             <PageHeader title="Progress Pekerjaan" subtitle="Pantau status layanan secara real-time" />
-            <main className="px-6 pt-6">
+            <main className="px-6 pt-6 pb-24">
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col gap-1">
-                  <span className="text-3xl font-extrabold text-slate-800">0</span>
+                  <span className="text-3xl font-extrabold text-slate-800">
+                    {transactions.filter(t => (t.customerID === user?.uid || t.mitraID === user?.uid) && t.status === 'paid').length}
+                  </span>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aktif</span>
                 </div>
                 <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col gap-1">
-                  <span className="text-3xl font-extrabold text-accent">0</span>
+                  <span className="text-3xl font-extrabold text-accent">
+                    {transactions.filter(t => (t.customerID === user?.uid || t.mitraID === user?.uid) && t.status === 'completed').length}
+                  </span>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Selesai</span>
                 </div>
               </div>
@@ -2271,14 +2636,109 @@ export default function App() {
                 ))}
               </div>
 
-              <div className="space-y-4 flex flex-col items-center justify-center py-12">
-                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                  <Clock size={32} className="text-slate-300" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-800">Belum Ada Progress</h3>
-                <p className="text-xs font-medium text-slate-400 text-center max-w-[200px]">
-                  Pesanan jasa Anda akan muncul di sini setelah Anda melakukan pemesanan.
-                </p>
+              <div className="space-y-4">
+                {transactions.filter(t => (t.customerID === user?.uid || t.mitraID === user?.uid) && (t.status === 'paid' || t.status === 'in_progress' || t.status === 'completed')).length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                      <Clock size={32} className="text-slate-300" />
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-800">Belum Ada Progress</h3>
+                    <p className="text-xs font-medium text-slate-400 text-center max-w-[200px]">
+                      Pesanan jasa Anda akan muncul di sini setelah Anda melakukan pemesanan.
+                    </p>
+                  </div>
+                ) : (
+                  transactions.filter(t => (t.customerID === user?.uid || t.mitraID === user?.uid) && (t.status === 'paid' || t.status === 'in_progress' || t.status === 'completed')).map(t => (
+                    <div key={t.id} className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 neo-3d space-y-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-800">{t.serviceTitle || 'Layanan Jasa'}</h3>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                            {t.customerID === user?.uid ? `Mitra: ${t.mitraID}` : `Pelanggan: ${t.customerName || 'Pelanggan'}`}
+                          </p>
+                        </div>
+                        <span className={`text-[9px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest ${
+                          t.status === 'completed' ? 'bg-accent/10 text-accent' : 
+                          t.status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
+                        }`}>
+                          {t.status === 'completed' ? 'Selesai' : 
+                           t.status === 'in_progress' ? 'Dikerjakan' : 'Menunggu Mitra'}
+                        </span>
+                      </div>
+                      <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center">
+                        <div>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase">Total Deal</p>
+                          <p className="text-sm font-extrabold text-primary">Rp {t.totalPrice?.toLocaleString()}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[9px] font-bold text-slate-400 uppercase">Status Pembayaran</p>
+                          <p className="text-[10px] font-bold text-emerald-600">DP Lunas</p>
+                        </div>
+                      </div>
+                      
+                      {t.status === 'paid' && t.customerID === user?.uid && (
+                        <div className="space-y-3 mt-4">
+                          <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl flex items-start gap-3">
+                            <Clock size={16} className="text-amber-500 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-xs font-bold text-amber-800">Mitra akan segera menghubungi anda</p>
+                              <p className="text-[10px] text-amber-600 mt-1">Silahkan klik tombol di bawah kalau mitra sudah datang dan mulai bekerja.</p>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={async () => {
+                              if (window.confirm('Apakah mitra sudah mulai bekerja?')) {
+                                try {
+                                  await updateDoc(doc(db, 'transactions', t.id), {
+                                    status: 'in_progress',
+                                    updatedAt: serverTimestamp()
+                                  });
+                                } catch (e) {
+                                  console.error(e);
+                                  alert('Gagal mengupdate pesanan.');
+                                }
+                              }
+                            }}
+                            className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold text-xs shadow-lg shadow-emerald-600/30 active:scale-95 transition-transform flex items-center justify-center gap-2"
+                          >
+                            <PlayCircle size={16} /> Mulai Pekerjaan
+                          </button>
+                        </div>
+                      )}
+
+                      {t.status === 'in_progress' && t.customerID === user?.uid && (
+                        <div className="space-y-3 mt-4">
+                          <div className="bg-blue-50 border border-blue-200 p-3 rounded-xl flex items-start gap-3">
+                            <Wrench size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-xs font-bold text-blue-800">Pekerjaan Sedang Berlangsung</p>
+                              <p className="text-[10px] text-blue-600 mt-1">Silahkan klik tombol di bawah jika pekerjaan telah selesai.</p>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={async () => {
+                              if (window.confirm('Apakah pekerjaan sudah selesai?')) {
+                                try {
+                                  await updateDoc(doc(db, 'transactions', t.id), {
+                                    status: 'completed',
+                                    updatedAt: serverTimestamp()
+                                  });
+                                  alert('Terima kasih! Pesanan telah diselesaikan.');
+                                } catch (e) {
+                                  console.error(e);
+                                  alert('Gagal menyelesaikan pesanan.');
+                                }
+                              }
+                            }}
+                            className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold text-xs shadow-lg shadow-emerald-600/30 active:scale-95 transition-transform flex items-center justify-center gap-2"
+                          >
+                            <CheckCircle2 size={16} /> Pekerjaan Selesai
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </main>
           </motion.div>
@@ -2296,7 +2756,7 @@ export default function App() {
               <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 text-center mb-8 neo-3d">
                 <div className="w-24 h-24 bg-slate-100 rounded-full mx-auto mb-4 flex items-center justify-center text-slate-300 border-4 border-white shadow-lg overflow-hidden">
                   {user?.photoURL ? (
-                    <img src={user.photoURL} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <img src={user.photoURL || undefined} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   ) : (
                     <User size={48} />
                   )}
@@ -2386,29 +2846,31 @@ export default function App() {
                 ) : (
                   <button 
                     onClick={() => {
-                      // Find pending transaction for this mitra
-                      const pendingTrans = transactions.find(t => 
+                      // Find deal_agreed transaction for this mitra
+                      const agreedTrans = transactions.find(t => 
                         t.customerID === user?.uid && 
                         t.mitraID === chatMitra?.id && 
-                        t.status === 'pending'
+                        t.status === 'deal_agreed'
                       );
-                      if (pendingTrans) {
-                        setActiveTransaction(pendingTrans);
-                        setPaymentAmount(pendingTrans.dpAmount);
+                      if (agreedTrans) {
+                        setActiveTransaction(agreedTrans);
+                        setPaymentAmount(agreedTrans.dpAmount);
                         setPaymentProof(null);
                         setPaymentProofPreview(null);
                         setShowPaymentModal(true);
                       } else {
-                        alert("Belum ada penawaran dari mitra.");
+                        alert("Silakan klik 'Bayar DP 10%' terlebih dahulu untuk menyetujui penawaran.");
                       }
                     }} 
                     className="bg-emerald-50 text-emerald-600 px-3 py-2 rounded-xl border border-emerald-100 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5"
                   >
                     <ShieldCheck size={14} />
-                    Bayar DP 10%
+                    Upload Bukti DP
                   </button>
                 )}
-                <button onClick={openDealModal} className="bg-slate-50 p-2 rounded-xl border border-slate-100 text-primary"><Handshake size={20} /></button>
+                <button onClick={openDealModal} className="bg-slate-50 p-2 rounded-xl border border-slate-100 text-primary text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                  <Handshake size={14} /> Bayar DP 10%
+                </button>
               </div>
             </header>
 
@@ -2527,7 +2989,7 @@ export default function App() {
                         onClick={() => setSelectedPaymentForView(p)}
                         className="relative aspect-video rounded-2xl overflow-hidden shadow-md cursor-pointer group"
                       >
-                        <img src={p.proofUrl} className="w-full h-full object-cover" alt="Bukti Transfer" />
+                        <img src={p.proofUrl || undefined} className="w-full h-full object-cover" alt="Bukti Transfer" />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <Search size={24} className="text-white" />
                         </div>
@@ -2614,7 +3076,7 @@ export default function App() {
                         className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex gap-4 neo-3d"
                       >
                         <img 
-                          src={service.img} 
+                          src={service.img || undefined} 
                           alt={service.title}
                           className="w-24 h-24 rounded-2xl object-cover shadow-inner"
                           referrerPolicy="no-referrer"
@@ -2638,7 +3100,7 @@ export default function App() {
                             </div>
                           </div>
                           <div className="flex items-center justify-between mt-2">
-                            <span className="text-sm font-extrabold text-primary">{service.price}</span>
+                            <span className="text-sm font-extrabold text-primary">Rp {formatPrice(service.price)}</span>
                             {service.mitraId === user?.uid ? (
                               <button 
                                 onClick={(e) => { e.stopPropagation(); navigateTo('iklan-saya'); }}
@@ -2689,6 +3151,18 @@ export default function App() {
               ) : (
                 mitraOrders.map((order) => (
                   <div key={order.id} className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100 neo-3d space-y-4">
+                    {order.status === 'paid' && (
+                      <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex items-start gap-3 mb-2">
+                        <div className="bg-emerald-100 p-2 rounded-full shrink-0">
+                          <CheckCircle2 size={16} className="text-emerald-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-emerald-800">Pelanggan sudah bayar DP 10%.</p>
+                          <p className="text-[11px] text-emerald-600 mt-0.5">Silahkan hubungi pelanggan</p>
+                          <p className="text-[11px] text-emerald-600 mt-0.5">Selamat bekerja dan semangat demi keluarga ❤️</p>
+                        </div>
+                      </div>
+                    )}
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="text-sm font-bold text-slate-800">{order.serviceTitle}</h3>
@@ -2696,10 +3170,11 @@ export default function App() {
                       </div>
                       <span className={`text-[9px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest ${
                         order.status === 'accepted' ? 'bg-primary/10 text-primary' : 
+                        order.status === 'paid' ? 'bg-emerald-100 text-emerald-700' :
                         order.status === 'rejected' ? 'bg-rose-50 text-rose-600' : 
                         'bg-accent/10 text-accent'
                       }`}>
-                        {order.status === 'pending' ? 'Menunggu' : order.status === 'accepted' ? 'Diterima' : 'Ditolak'}
+                        {order.status === 'pending' ? 'Menunggu' : order.status === 'accepted' ? 'Diterima' : order.status === 'paid' ? 'Lunas (DP)' : 'Ditolak'}
                       </span>
                     </div>
                     
@@ -2707,12 +3182,26 @@ export default function App() {
                       <div>
                         <p className="text-[9px] font-bold text-slate-400 uppercase">Total Deal</p>
                         <p className="text-sm font-extrabold text-primary">Rp {order.totalPrice.toLocaleString()}</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase mt-2">Sisa Cash ke Mitra</p>
+                        <p className="text-sm font-extrabold text-emerald-600">Rp {(order.totalPrice * 0.9).toLocaleString()}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-[9px] font-bold text-slate-400 uppercase">Tanggal</p>
                         <p className="text-[10px] font-bold text-slate-700">{order.date}</p>
                       </div>
                     </div>
+
+                    {order.status === 'paid' && order.customerPhone && (
+                      <div className="bg-blue-50 p-4 rounded-2xl flex items-center justify-between">
+                        <div>
+                          <p className="text-[9px] font-bold text-blue-400 uppercase mb-1">Kontak Pelanggan</p>
+                          <p className="text-sm font-black text-blue-700">{order.customerPhone}</p>
+                        </div>
+                        <a href={`https://wa.me/${order.customerPhone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="bg-blue-600 text-white p-2 rounded-xl shadow-lg shadow-blue-600/30 active:scale-95 transition-transform">
+                          <MessageSquare size={16} />
+                        </a>
+                      </div>
+                    )}
 
                     <div className="flex gap-3 pt-2">
                       <button 
@@ -2729,7 +3218,7 @@ export default function App() {
                           <button 
                             onClick={async () => {
                               try {
-                                await updateDoc(doc(db, 'orders', order.id), { status: 'accepted' });
+                                await updateDoc(doc(db, 'transactions', order.id), { status: 'accepted' });
                                 alert('Pesanan diterima!');
                               } catch (error) {
                                 console.error("Error accepting order:", error);
@@ -2743,7 +3232,7 @@ export default function App() {
                           <button 
                             onClick={async () => {
                               try {
-                                await updateDoc(doc(db, 'orders', order.id), { status: 'rejected' });
+                                await updateDoc(doc(db, 'transactions', order.id), { status: 'rejected' });
                                 alert('Pesanan ditolak');
                               } catch (error) {
                                 console.error("Error rejecting order:", error);
@@ -2769,7 +3258,7 @@ export default function App() {
             <main className="px-6 pt-6 pb-12 space-y-6">
               <div className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 text-center neo-3d">
                 <div className="relative w-24 h-24 mx-auto mb-4">
-                  <img src={selectedMitra.foto} className="w-full h-full rounded-full border-4 border-primary shadow-lg object-cover" />
+                  <img src={selectedMitra.foto || undefined} className="w-full h-full rounded-full border-4 border-primary shadow-lg object-cover" />
                   <div className="absolute bottom-1 right-1 w-5 h-5 bg-primary rounded-full border-2 border-white" />
                 </div>
                 <h3 className="text-lg font-bold text-slate-800">{selectedMitra.name}</h3>
@@ -2808,8 +3297,22 @@ export default function App() {
                   {selectedMitra.layanan.map((l: string) => (
                     <span key={l} className="bg-primary/10 text-primary text-[9px] font-bold px-3 py-1.5 rounded-full">{l}</span>
                   ))}
+                  {selectedMitra.skills?.map((s: string) => (
+                    <span key={s} className="bg-accent/10 text-accent text-[9px] font-bold px-3 py-1.5 rounded-full">{s}</span>
+                  ))}
                 </div>
               </div>
+
+              {selectedMitra.coverageAreas && selectedMitra.coverageAreas.length > 0 && (
+                <div className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100 space-y-4">
+                  <h3 className="text-sm font-bold text-primary flex items-center gap-2"><MapPin size={18} /> Jangkauan Wilayah</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedMitra.coverageAreas.map((area: string) => (
+                      <span key={area} className="bg-slate-100 text-slate-600 text-[9px] font-bold px-3 py-1.5 rounded-full">{area}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100 space-y-4">
                 <h3 className="text-sm font-bold text-primary flex items-center gap-2"><MapPin size={18} /> Alamat & Kontak</h3>
@@ -2866,21 +3369,42 @@ export default function App() {
                     </div>
                   );
                 })()}
+              </div>
 
-                <div className="bg-slate-50 p-4 rounded-2xl">
-                  <p className="text-[10px] font-bold text-slate-700 mb-2 uppercase tracking-widest">Area Layanan:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {['Jakarta Selatan', 'Jakarta Pusat', 'Jakarta Barat', 'Depok'].map(a => (
-                      <span key={a} className="bg-white text-slate-600 text-[9px] font-bold px-3 py-1 rounded-lg shadow-sm">{a}</span>
+              <div className="bg-white p-6 rounded-[40px] shadow-sm border border-slate-100 space-y-4">
+                <h3 className="text-sm font-bold text-primary flex items-center gap-2"><Star size={18} /> Review dari Pelanggan</h3>
+                {mitraReviews && mitraReviews.length > 0 ? (
+                  <div className="space-y-4">
+                    {mitraReviews.map((review: any) => (
+                      <div key={review.id} className="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 font-bold text-xs">
+                            {review.customerName ? review.customerName.charAt(0).toUpperCase() : 'P'}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-800">{review.customerName || 'Pelanggan'}</p>
+                            <div className="flex items-center gap-1">
+                              {[...Array(5)].map((_, i) => (
+                                <Star key={i} size={10} className={i < (review.rating || 5) ? "text-accent fill-accent" : "text-slate-200"} />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-xs text-slate-600 leading-relaxed">{review.comment || 'Tidak ada komentar.'}</p>
+                      </div>
                     ))}
                   </div>
-                </div>
+                ) : (
+                  <div className="text-center py-6 bg-slate-50 rounded-2xl">
+                    <p className="text-xs font-medium text-slate-400">Belum ada review dari pelanggan.</p>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-4">
                 <button 
                   onClick={() => {
-                    setChatMitra({ id: selectedMitra.id.toString(), name: selectedMitra.name });
+                    setChatMitra({ id: selectedMitra.mitraId || selectedMitra.id.toString(), name: selectedMitra.name, serviceTitle: selectedMitra.title, serviceId: selectedMitra.id });
                     navigateTo('chat');
                   }}
                   className="flex-1 bg-primary text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-primary/30 flex items-center justify-center gap-2"
@@ -3953,6 +4477,27 @@ export default function App() {
                 </div>
 
                 <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Jangkauan Wilayah (Opsional)</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {['Kota Bandung', 'Kota Cimahi', 'Kab. Bandung', 'Kab. Bandung Barat (KBB)'].map(area => (
+                      <button
+                        key={area}
+                        onClick={() => {
+                          if (adCoverageAreas.includes(area)) {
+                            setAdCoverageAreas(adCoverageAreas.filter(a => a !== area));
+                          } else {
+                            setAdCoverageAreas([...adCoverageAreas, area]);
+                          }
+                        }}
+                        className={`p-3 rounded-xl border-2 text-[10px] font-bold transition-all text-left ${adCoverageAreas.includes(area) ? 'border-primary bg-primary/5 text-primary' : 'border-slate-50 bg-slate-50 text-slate-400'}`}
+                      >
+                        {area}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Tarif / Harga Mulai</label>
                   <input 
                     type="text" 
@@ -3992,7 +4537,7 @@ export default function App() {
                   >
                     {adImage ? (
                       <>
-                        <img src={adImage} className="w-full h-full object-cover" />
+                        <img src={adImage || undefined} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                           <Camera size={24} className="text-white" />
                         </div>
@@ -4013,6 +4558,52 @@ export default function App() {
                     placeholder="Jelaskan keahlian dan pengalaman Anda..." 
                     className="w-full bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none min-h-[120px]" 
                   />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Keahlian Spesifik (Maks 5)</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      value={newSkill}
+                      onChange={(e) => setNewSkill(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (newSkill.trim() && adSkills.length < 5) {
+                            setAdSkills([...adSkills, newSkill.trim()]);
+                            setNewSkill('');
+                          }
+                        }
+                      }}
+                      placeholder="Contoh: Pasang Keramik" 
+                      className="flex-1 bg-slate-50 rounded-2xl p-4 text-sm font-medium outline-none" 
+                    />
+                    <button 
+                      onClick={() => {
+                        if (newSkill.trim() && adSkills.length < 5) {
+                          setAdSkills([...adSkills, newSkill.trim()]);
+                          setNewSkill('');
+                        }
+                      }}
+                      disabled={adSkills.length >= 5 || !newSkill.trim()}
+                      className="bg-primary text-white px-6 rounded-2xl font-bold text-sm disabled:opacity-50"
+                    >
+                      Tambah
+                    </button>
+                  </div>
+                  {adSkills.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {adSkills.map((skill, index) => (
+                        <div key={index} className="bg-primary/10 text-primary px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1">
+                          {skill}
+                          <button onClick={() => setAdSkills(adSkills.filter((_, i) => i !== index))} className="hover:text-red-500">
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 
                 <div className="pt-4 space-y-3">
@@ -4045,6 +4636,8 @@ export default function App() {
                           city: adCity,
                           district: adDistrict,
                           location: `${adDistrict}, ${adCity}, ${adProvince}`,
+                          coverageAreas: adCoverageAreas,
+                          skills: adSkills,
                           img: adImage || 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400',
                           mitraId: user?.uid,
                           mitraName: user?.displayName || 'Mitra Baru',
@@ -4076,6 +4669,8 @@ export default function App() {
                         setAdProvince('');
                         setAdCity('');
                         setAdDistrict('');
+                        setAdCoverageAreas([]);
+                        setAdSkills([]);
                       } catch (error) {
                         console.error("Error saving ad:", error);
                         alert('Gagal menyimpan iklan. Silakan coba lagi.');
@@ -4117,9 +4712,9 @@ export default function App() {
                   <div className="absolute -top-2 -right-2 bg-primary text-white p-1.5 rounded-full shadow-lg">
                     <ShieldCheck size={16} />
                   </div>
-                  <Handshake size={48} strokeWidth={1.5} />
+                  <Wallet size={48} strokeWidth={1.5} />
                 </div>
-                <h3 className="text-2xl font-black text-slate-800 tracking-tighter italic">Konfirmasi <span className="text-primary">Deal</span></h3>
+                <h3 className="text-2xl font-black text-slate-800 tracking-tighter italic">Bayar <span className="text-primary">DP 10%</span></h3>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Sistem Jaminan Transaksi Aman</p>
               </div>
 
@@ -4168,7 +4763,7 @@ export default function App() {
                   onClick={confirmDeal} 
                   className="w-full bg-primary text-white py-5 rounded-[24px] font-black text-xs tracking-[0.15em] shadow-xl shadow-primary/30 flex items-center justify-center gap-3"
                 >
-                  <CheckCircle2 size={18} /> KONFIRMASI PEMBAYARAN
+                  <CheckCircle2 size={18} /> BAYAR DP 10%
                 </motion.button>
                 <button onClick={() => setShowDealModal(false)} className="w-full py-3 text-slate-400 font-bold text-[10px] uppercase tracking-widest">Batalkan Transaksi</button>
               </div>
@@ -4530,53 +5125,13 @@ export default function App() {
             >
               <div className="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-6 sm:hidden" />
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-slate-800">Pembayaran DP 10%</h3>
+                <h3 className="text-xl font-bold text-slate-800">Upload Pembayaran DP</h3>
                 <button onClick={() => setShowPaymentModal(false)} className="p-2 bg-slate-50 rounded-full text-slate-400">
                   <X size={20} />
                 </button>
               </div>
 
-              <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl mb-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-emerald-600 shadow-sm">
-                    <Building2 size={20} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Rekening JasaMitra</p>
-                    <p className="text-sm font-black text-slate-800">BCA 5150556645</p>
-                  </div>
-                </div>
-                <p className="text-[10px] font-bold text-slate-500">a.n. Admin Jasamitra</p>
-              </div>
-
               <div className="space-y-4 mb-8">
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-2">Nominal Deal (100%)</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">Rp</span>
-                    <input 
-                      type="number" 
-                      value={paymentAmount || ''}
-                      onChange={(e) => setPaymentAmount(Number(e.target.value))}
-                      placeholder="Contoh: 1000000" 
-                      className="w-full bg-slate-50 border-none rounded-2xl p-4 pl-10 text-sm font-black outline-none focus:ring-2 ring-emerald-500/20" 
-                    />
-                  </div>
-                </div>
-
-                {paymentAmount > 0 && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-slate-50 p-4 rounded-2xl">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">DP 10% (Transfer)</p>
-                      <p className="text-sm font-black text-emerald-600">Rp {(paymentAmount * 0.1).toLocaleString()}</p>
-                    </div>
-                    <div className="bg-slate-50 p-4 rounded-2xl">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Sisa 90% (Cash)</p>
-                      <p className="text-sm font-black text-slate-400">Rp {(paymentAmount * 0.9).toLocaleString()}</p>
-                    </div>
-                  </div>
-                )}
-
                 <div className="space-y-2">
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-2">Upload Bukti Transfer</label>
                   <div className="relative">
@@ -4593,7 +5148,7 @@ export default function App() {
                     >
                       {paymentProofPreview ? (
                         <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-md">
-                          <img src={paymentProofPreview} className="w-full h-full object-cover" alt="Preview" />
+                          <img src={paymentProofPreview || undefined} className="w-full h-full object-cover" alt="Preview" />
                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                             <p className="text-white text-[10px] font-bold uppercase tracking-widest">Ganti Foto</p>
                           </div>
@@ -4604,7 +5159,7 @@ export default function App() {
                             <Camera size={24} />
                           </div>
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Klik untuk upload foto</p>
-                          <p className="text-[8px] text-slate-300 font-medium">Maksimal 2MB (JPG/PNG)</p>
+                          <p className="text-[8px] text-slate-300 font-medium">Maksimal 5MB (JPG/PNG)</p>
                         </>
                       )}
                     </label>
@@ -4687,7 +5242,7 @@ export default function App() {
               >
                 <X size={24} />
               </button>
-              <img src={selectedPaymentForView.proofUrl} className="w-full h-full object-contain" alt="Bukti Transfer Zoom" />
+              <img src={selectedPaymentForView.proofUrl || undefined} className="w-full h-full object-contain" alt="Bukti Transfer Zoom" />
             </motion.div>
           </div>
         )}
