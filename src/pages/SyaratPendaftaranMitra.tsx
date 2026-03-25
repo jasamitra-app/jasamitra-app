@@ -42,22 +42,14 @@ export const SyaratPendaftaranMitra: React.FC<SyaratPendaftaranMitraProps> = ({ 
  </div>
 
  <div className="pt-8 border-t border-slate-50">
- <label className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 cursor-pointer group">
- <input 
- type="checkbox" 
- checked={isTermsAccepted}
- onChange={(e) => setIsTermsAccepted(e.target.checked)}
- className="mt-1 w-5 h-5 accent-primary rounded-md" 
- />
- <span className="text-xs font-bold text-slate-600 leading-relaxed group-hover:text-primary transition-colors">
+ <p className="text-xs font-bold text-slate-600 leading-relaxed text-center">
  Saya telah membaca dan menyetujui Syarat Pendaftaran Mitra JasaMitra
- </span>
- </label>
+ </p>
  </div>
 
  <button 
  onClick={handleBack}
- className="w-full bg-primary text-white py-5 rounded-full font-black text-sm uppercase tracking-[0.2em] shadow-sm active:scale-95 transition-all"
+ className="w-full bg-primary text-white py-5 rounded-full font-black text-sm uppercase tracking-[0.2em] shadow-sm active:scale-95 transition-all mt-6"
  >
  Kembali
  </button>

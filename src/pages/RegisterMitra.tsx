@@ -6,6 +6,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, db, storage } from '../lib/firebase';
 import { DISTRICTS } from '../constants';
+import { SyaratPendaftaranMitra } from './SyaratPendaftaranMitra';
 
 interface RegisterMitraProps {
  DISTRICTS: any;
@@ -20,6 +21,7 @@ export const RegisterMitra: React.FC<RegisterMitraProps> = ({
  navigateTo,
  setIsMitra
 }) => {
+ const [showSyarat, setShowSyarat] = useState(false);
  const [regStep, setRegStep] = useState(1);
  const [signupCity, setSignupCity] = useState('');
  const [signupDistrict, setSignupDistrict] = useState('');
@@ -133,6 +135,14 @@ export const RegisterMitra: React.FC<RegisterMitraProps> = ({
  setIsSubmitting(false);
  }
  };
+
+ if (showSyarat) {
+ return (
+ <div className="absolute inset-0 z-50 bg-slate-50 overflow-y-auto">
+ <SyaratPendaftaranMitra handleBack={() => setShowSyarat(false)} />
+ </div>
+ );
+ }
 
  return (
  <motion.div key="daftar-mitra" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
@@ -433,7 +443,7 @@ export const RegisterMitra: React.FC<RegisterMitraProps> = ({
  <div className="bg-accent/10 p-6 rounded-3xl border border-accent/20 space-y-4">
  <h4 className="text-[10px] font-bold text-accent uppercase tracking-wider flex items-center gap-2"><AlertTriangle size={16} /> SYARAT PENDAFTARAN</h4>
  <button 
- onClick={() => navigateTo('syarat-pendaftaran-mitra')}
+ onClick={() => setShowSyarat(true)}
  className="text-[11px] text-accent font-bold underline cursor-pointer text-left"
  >
  Baca Syarat Pendaftaran Mitra
@@ -445,7 +455,7 @@ export const RegisterMitra: React.FC<RegisterMitraProps> = ({
  onChange={(e) => setIsTermsAccepted(e.target.checked)} 
  className="w-4 h-4 accent-primary" 
  />
- <span className="text-[10px] text-slate-600 font-bold">Saya menyetujui syarat & ketentuan</span>
+ <span className="text-[10px] text-slate-600 font-bold">Saya telah membaca dan menyetujui Syarat Pendaftaran Mitra JasaMitra</span>
  </label>
  </div>
 

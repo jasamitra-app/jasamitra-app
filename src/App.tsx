@@ -1172,7 +1172,7 @@ export default function App() {
 
  {/* --- SYARAT PENDAFTARAN MITRA --- */}
  {activePage === 'syarat-pendaftaran-mitra' && (
- <SyaratPendaftaranMitra handleBack={handleBack} />
+ <SyaratPendaftaranMitra handleBack={() => navigateTo('daftar-mitra')} />
  )}
 
  {/* --- PERATURAN PELANGGAN --- */}

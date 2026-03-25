@@ -32,40 +32,45 @@ export const OnboardingScreen = ({ onSelect }: { onSelect: (role: 'pelanggan' | 
 
       <div className="flex-1 flex flex-col justify-center relative z-10">
         {/* LOGO SECTION - SAMA DENGAN SPLASHSCREEN */}
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
-          className="mb-6"
-        >
-          <div className="relative flex items-center justify-center">
-            {/* Soft glow behind logo */}
-            <motion.div
-              animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }}
-              transition={{ duration: 4, repeat: Infinity }}
-              className="absolute w-40 h-40 rounded-full bg-gradient-to-r from-[#F27D26]/10 to-[#003366]/10 blur-2xl"
-            />
-            
-            {/* Logo with floating animation */}
-            <motion.div
-              animate={{ y: [-4, 4, -4] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="relative"
-            >
-              <img 
-                src="https://i.ibb.co.com/G3Crzbc1/jasamitra-logo.webp"
-                alt="JASA MITRA Logo" 
-                className="w-24 h-24 md:w-28 md:h-28 object-contain"
-                style={{
-                  filter: "drop-shadow(0 10px 15px rgba(0,51,102,0.15))"
-                }}
-                onError={(e) => {
-                  e.currentTarget.src = "/images/logo.png";
-                }}
-              />
-            </motion.div>
-          </div>
-        </motion.div>
+        {/* LOGO SECTION - DIPERBESAR */}
+<motion.div
+  initial={{ scale: 0.9, opacity: 0 }}
+  animate={{ scale: 1, opacity: 1 }}
+  transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
+  className="mb-8"  // Ubah dari mb-6 ke mb-8 untuk spacing
+>
+  <div className="relative flex items-center justify-center">
+    {/* Soft glow behind logo - DIPERBESAR */}
+    <motion.div
+      animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }}
+      transition={{ duration: 4, repeat: Infinity }}
+      className="absolute w-56 h-56 rounded-full bg-gradient-to-r from-[#F27D26]/10 to-[#003366]/10 blur-2xl"  // Dari w-40 h-40 jadi w-56 h-56
+    />
+    
+    {/* Logo with floating animation - DIPERBESAR */}
+    <motion.div
+      animate={{ y: [-4, 4, -4] }}
+      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      className="relative"
+    >
+<img 
+  src="https://i.ibb.co.com/G3Crzbc1/jasamitra-logo.webp"
+  alt="JASA MITRA Logo" 
+  className="w-40 h-40 md:w-44 md:h-44 object-contain"  // w-40 h-40 untuk versi besar
+  style={{
+    filter: "drop-shadow(0 20px 25px rgba(0,51,102,0.25))"
+  }}
+/>
+
+{/* Glow juga diperbesar */}
+<motion.div
+  animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }}
+  transition={{ duration: 4, repeat: Infinity }}
+  className="absolute w-64 h-64 rounded-full bg-gradient-to-r from-[#F27D26]/10 to-[#003366]/10 blur-2xl"  // w-64 h-64
+/>
+    </motion.div>
+  </div>
+</motion.div>
 
         {/* WELCOME TEXT */}
         <motion.div
