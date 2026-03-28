@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Camera, ShieldCheck, Wallet, CheckCircle2, Star, Info, Send, AlertTriangle } from 'lucide-react';
+import { X, Camera, ShieldCheck, Wallet, CheckCircle2, Star, Info, Send, AlertTriangle, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import { CATEGORIES, SUB_CATEGORIES, DISTRICTS } from '../constants';
 
 export function Modals({
@@ -38,10 +38,110 @@ export function Modals({
   rejectPayment, selectedPaymentForView, setSelectedPaymentForView,
 
   // Login Mitra Modal
-  showLoginMitraModal, setShowLoginMitraModal, navigateTo
+  showLoginMitraModal, setShowLoginMitraModal, navigateTo,
+
+  // Location Modal
+  showLocationModal, setShowLocationModal, currentAddress, setCurrentAddress, recentLocations, detectLocation
 }: any) {
+  const [expandedCity, setExpandedCity] = useState<string | null>(null);
+
   return (
     <AnimatePresence>
+      {/* Location Modal */}
+      {showLocationModal && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[4000] flex items-end justify-center bg-slate-900/60">
+          <motion.div 
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="bg-white w-full max-w-md rounded-t-3xl overflow-hidden flex flex-col max-h-[90vh]"
+          >
+            <div className="p-4 border-b flex justify-between items-center bg-white sticky top-0 z-10">
+              <h3 className="font-bold text-lg">Pilih Lokasi</h3>
+              <button onClick={() => setShowLocationModal(false)} className="p-2 bg-slate-100 rounded-full text-slate-500">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto">
+              <button onClick={detectLocation} className="w-full flex items-center gap-3 p-4 bg-primary/5 text-primary rounded-2xl font-bold mb-3">
+                <MapPin size={20} />
+                Gunakan Lokasi Saat Ini
+              </button>
+
+              <button onClick={() => { setCurrentAddress('Lokasi Bandung Raya & Cimahi'); setShowLocationModal(false); }} className="w-full flex items-center gap-3 p-4 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors rounded-2xl font-bold mb-6 border border-slate-100">
+                <MapPin size={20} className="text-slate-400" />
+                Lokasi Bandung Raya & Cimahi
+              </button>
+              
+              {recentLocations && recentLocations.length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Pencarian Terakhir</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {recentLocations.map((loc: string) => (
+                      <button
+                        key={loc}
+                        onClick={() => { setCurrentAddress(loc); setShowLocationModal(false); }}
+                        className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-full transition-colors"
+                      >
+                        {loc}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Pilih Wilayah</h4>
+              <div className="space-y-3">
+                {Object.keys(DISTRICTS).map((city) => (
+                  <div key={city} className="bg-slate-50 rounded-2xl overflow-hidden border border-slate-100">
+                    <button 
+                      onClick={() => setExpandedCity(expandedCity === city ? null : city)}
+                      className="w-full flex items-center justify-between p-4 text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <MapPin size={18} className={expandedCity === city ? "text-primary" : "text-slate-400"} />
+                        <span className={`font-bold text-sm ${expandedCity === city ? "text-primary" : "text-slate-700"}`}>{city}</span>
+                      </div>
+                      {expandedCity === city ? <ChevronUp size={18} className="text-primary" /> : <ChevronDown size={18} className="text-slate-400" />}
+                    </button>
+                    
+                    <AnimatePresence>
+                      {expandedCity === city && (
+                        <motion.div 
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="bg-white border-t border-slate-100"
+                        >
+                          <div className="p-2 grid grid-cols-1 gap-1 max-h-48 overflow-y-auto">
+                            <button
+                              onClick={() => { setCurrentAddress(city); setShowLocationModal(false); }}
+                              className="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+                            >
+                              Semua {city}
+                            </button>
+                            {DISTRICTS[city].map((district) => (
+                              <button
+                                key={district}
+                                onClick={() => { setCurrentAddress(`${district}, ${city}`); setShowLocationModal(false); }}
+                                className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                              >
+                                {district}
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
       {/* Ad Modal */}
       {showAdModal && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[4000] flex items-end justify-center bg-slate-900/60 ">

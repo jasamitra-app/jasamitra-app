@@ -106,6 +106,22 @@ export const LocationModal = ({
  </div>
  </motion.button>
 
+ {/* Semua Lokasi */}
+ <motion.button 
+ whileHover={{ scale: 1.02, translateY: -1 }}
+ whileTap={{ scale: 0.98 }}
+ onClick={() => onSelect('Indonesia')}
+ className="w-full px-6 py-4 flex items-start gap-4 hover:bg-white/60 transition-colors border-b border-slate-200 group "
+ >
+ <div className="mt-1 p-2 bg-primary/10 rounded-full text-primary group-hover:bg-primary group-hover:text-white transition-colors shadow-sm border border-slate-200">
+ <MapPin size={20} />
+ </div>
+ <div className="text-left">
+ <h3 className="font-bold text-primary">Semua Lokasi</h3>
+ <p className="text-xs text-slate-500 font-medium mt-0.5">Tampilkan jasa dari seluruh Indonesia</p>
+ </div>
+ </motion.button>
+
  {/* Saat Ini Digunakan */}
  <div className="px-6 py-6 ">
  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Saat Ini Digunakan</h4>

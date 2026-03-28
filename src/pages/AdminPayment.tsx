@@ -52,7 +52,7 @@ const AdminPayment: React.FC<AdminPaymentProps> = ({
  <User size={20} />
  </div>
  <div>
- <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pelanggan</p>
+ <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{p.type === 'highlight_ad' ? 'Mitra' : 'Pelanggan'}</p>
  <p className="text-sm font-black text-slate-800">{p.userName}</p>
  </div>
  </div>
@@ -62,16 +62,24 @@ const AdminPayment: React.FC<AdminPaymentProps> = ({
  </div>
  </div>
 
- <div className="grid grid-cols-2 gap-4 mb-6">
- <div className="bg-slate-50 p-4 rounded-2xl">
- <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nominal Deal</p>
- <p className="text-sm font-black text-slate-800">Rp {p.dealAmount?.toLocaleString()}</p>
- </div>
- <div className="bg-slate-50 p-4 rounded-2xl">
- <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">DP 10% (Dibayar)</p>
- <p className="text-sm font-black text-emerald-600">Rp {p.dpAmount?.toLocaleString()}</p>
- </div>
- </div>
+ {p.type === 'highlight_ad' ? (
+   <div className="bg-amber-50 p-4 rounded-2xl mb-6 border border-amber-100">
+     <p className="text-[9px] font-bold text-amber-600 uppercase tracking-widest mb-1">Jenis Pembayaran</p>
+     <p className="text-sm font-black text-slate-800">Daftar Mitra Unggulan</p>
+     <p className="text-xs font-bold text-emerald-600 mt-1">Rp {p.amount?.toLocaleString()}</p>
+   </div>
+ ) : (
+   <div className="grid grid-cols-2 gap-4 mb-6">
+   <div className="bg-slate-50 p-4 rounded-2xl">
+   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nominal Deal</p>
+   <p className="text-sm font-black text-slate-800">Rp {p.dealAmount?.toLocaleString()}</p>
+   </div>
+   <div className="bg-slate-50 p-4 rounded-2xl">
+   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">DP 10% (Dibayar)</p>
+   <p className="text-sm font-black text-emerald-600">Rp {p.dpAmount?.toLocaleString()}</p>
+   </div>
+   </div>
+ )}
 
  <div className="mb-6">
  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Bukti Transfer</p>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { User, LogOut, FileText, ShieldCheck, MapPin, ClipboardList, Edit3, Handshake, Info, ChevronRight } from 'lucide-react';
+import { User, LogOut, FileText, ShieldCheck, MapPin, ClipboardList, Edit3, Handshake, Info, ChevronRight, Star, HelpCircle, TrendingUp, Calendar } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { Page } from '../types';
 
@@ -99,6 +99,10 @@ export const Account: React.FC<AccountProps> = ({ user, userRole, navigateTo, se
  { id: 'edit-profil', label: 'Edit Profil', icon: Edit3, color: 'text-slate-600', bg: 'bg-slate-50', show: true },
  { id: 'alamat-saya', label: 'Alamat Saya', icon: MapPin, color: 'text-slate-600', bg: 'bg-slate-50', show: true },
  { id: 'iklan-saya', label: 'Iklan Saya', icon: ClipboardList, color: 'text-slate-600', bg: 'bg-slate-50', show: userRole === 'mitra' },
+ { id: 'statistik-mitra', label: 'Statistik Mitra', icon: TrendingUp, color: 'text-slate-600', bg: 'bg-slate-50', show: userRole === 'mitra' },
+ { id: 'jadwal-mitra', label: 'Jadwal Kerja', icon: Calendar, color: 'text-slate-600', bg: 'bg-slate-50', show: userRole === 'mitra' },
+ { id: 'daftar-mitra-unggulan', label: 'Daftar Mitra Unggulan', icon: Star, color: 'text-amber-600', bg: 'bg-amber-50', show: userRole === 'mitra' },
+ { id: 'pusat-bantuan', label: userRole === 'mitra' ? 'Pusat Bantuan Mitra' : 'Pusat Bantuan', icon: HelpCircle, color: 'text-blue-600', bg: 'bg-blue-50', show: userRole === 'mitra' || userRole === 'pelanggan' },
  { id: 'kebijakan', label: 'Kebijakan Privasi & Keamanan', icon: ShieldCheck, color: 'text-slate-500', bg: 'bg-slate-50', show: true },
  { id: 'syarat-ketentuan', label: 'Syarat & Ketentuan', icon: FileText, color: 'text-slate-500', bg: 'bg-slate-50', show: true },
  ].filter(item => item.show).map((item, index) => (

@@ -2,7 +2,6 @@ import { useState } from 'react';
 
 export function useUI() {
   const [showLoginMitraModal, setShowLoginMitraModal] = useState(false);
-  const [showLocationModal, setShowLocationModal] = useState(false);
   const [showAdModal, setShowAdModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -26,7 +25,6 @@ export function useUI() {
 
   return {
     showLoginMitraModal, setShowLoginMitraModal,
-    showLocationModal, setShowLocationModal,
     showAdModal, setShowAdModal,
     showReviewModal, setShowReviewModal,
     showRejectModal, setShowRejectModal,

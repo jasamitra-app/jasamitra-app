@@ -70,11 +70,13 @@ import { Page, Payment, Transaction, ChatMessage, Order } from './types';
 import { SplashScreen } from './components/SplashScreen';
 import { OnboardingScreen } from './components/OnboardingScreen';
 import { AppBottomNav } from './components/AppBottomNav';
-import { LocationModal } from './components/LocationModal';
 import { Modals } from './components/Modals';
 import { PageHeader } from './components/PageHeader';
 import { Login } from './pages/Login';
 import { Account } from './pages/Account';
+import { DaftarMitraUnggulan } from './pages/DaftarMitraUnggulan';
+import { PusatBantuan } from './pages/PusatBantuan';
+import { BantuanDetail } from './pages/BantuanDetail';
 import { Home } from './pages/Home';
 import Messages from './pages/Messages';
 import EditProfile from './pages/EditProfile';
@@ -87,6 +89,12 @@ import { SubCategory as SubCategoryPage } from './pages/SubCategory';
 import { IncomingOrders } from './pages/IncomingOrders';
 import { MitraProfile } from './pages/MitraProfile';
 import { RegisterMitra } from './pages/RegisterMitra';
+import { SemuaKategori } from './pages/SemuaKategori';
+import { Favorit } from './pages/Favorit';
+import { Invoice } from './pages/Invoice';
+import { MitraStats } from './pages/MitraStats';
+import { MitraSchedule } from './pages/MitraSchedule';
+import { LiveTracking } from './pages/LiveTracking';
 import { PeraturanPelanggan } from './pages/PeraturanPelanggan';
 import { ProtokolMitra } from './pages/ProtokolMitra';
 import { JaminanKeamanan } from './pages/JaminanKeamanan';
@@ -106,12 +114,10 @@ export default function App() {
   const { userChats, chatMitra, setChatMitra, chatMitraPhone, messages, inputText, setInputText, sendMessage } = useChat(user);
   const {
     showLoginMitraModal, setShowLoginMitraModal,
-    showLocationModal, setShowLocationModal,
     showAdModal, setShowAdModal,
     showReviewModal, setShowReviewModal,
     showRejectModal, setShowRejectModal,
     selectedMitra, setSelectedMitra,
-    selectedLocation, setSelectedLocation,
     editProfileName, setEditProfileName,
     editProfileEmail, setEditProfileEmail,
     editProfilePhone, setEditProfilePhone,
@@ -146,6 +152,17 @@ export default function App() {
   };
 
  const [services, setServices] = useState<Service[]>(INITIAL_SERVICES);
+ const [favorites, setFavorites] = useState<string[]>(() => {
+   const saved = localStorage.getItem('jasamitra_favorites');
+   return saved ? JSON.parse(saved) : [];
+ });
+ const toggleFavorite = (serviceId: string) => {
+   setFavorites(prev => {
+     const newFavs = prev.includes(serviceId) ? prev.filter(id => id !== serviceId) : [...prev, serviceId];
+     localStorage.setItem('jasamitra_favorites', JSON.stringify(newFavs));
+     return newFavs;
+   });
+ };
  const [featuredMitras, setFeaturedMitras] = useState<any[]>([]);
  const [searchQuery, setSearchQuery] = useState('');
  const [selectedCat, setSelectedCat] = useState<CategoryId>('all');
@@ -185,47 +202,73 @@ export default function App() {
  });
  const [kaffaPhotos, setKaffaPhotos] = useState<string[]>([]);
 
-   const [currentAddress, setCurrentAddress] = useState('Mendeteksi lokasi...');
- const [recentLocations, setRecentLocations] = useState(['Kota Bandung', 'Kota Cimahi', 'Kab Bandung', 'Kab Bandung Barat']);
+  const [currentAddress, setCurrentAddress] = useState(() => {
+    return localStorage.getItem('currentAddress') || 'Lokasi Bandung Raya & Cimahi';
+  });
 
- const detectLocation = () => {
- if (!navigator.geolocation) {
- alert("Geolocation tidak didukung oleh browser Anda.");
- return;
- }
+  useEffect(() => {
+    localStorage.setItem('currentAddress', currentAddress);
+  }, [currentAddress]);
 
- setCurrentAddress('Mendeteksi lokasi...');
- navigator.geolocation.getCurrentPosition(async (position) => {
- const { latitude, longitude } = position.coords;
- try {
- const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
- const data = await response.json();
- if (data.address) {
- const district = data.address.suburb || data.address.village || data.address.neighbourhood || data.address.city_district || '';
- const city = data.address.city || data.address.town || data.address.municipality || '';
- const fullAddress = district && city ? `${district}, ${city}` : data.display_name;
- setCurrentAddress(fullAddress);
- setSelectedLocation(fullAddress);
- setShowLocationModal(false);
- 
- // Add to recent
- if (!recentLocations.includes(fullAddress)) {
- setRecentLocations(prev => [fullAddress, ...prev.slice(0, 4)]);
- }
- }
- } catch (error) {
- console.error("Reverse geocoding failed:", error);
- alert("Gagal mendeteksi alamat lengkap. Menggunakan koordinat.");
- const coordLoc = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
- setCurrentAddress(coordLoc);
- setSelectedLocation(coordLoc);
- setShowLocationModal(false);
- }
- }, (error) => {
- console.error("Geolocation error:", error);
- alert("Gagal mendapatkan lokasi. Pastikan izin lokasi aktif.");
- });
- };
+  const [recentLocations, setRecentLocations] = useState<string[]>(() => {
+    const saved = localStorage.getItem('recentLocations');
+    return saved ? JSON.parse(saved) : ['Lokasi Bandung Raya & Cimahi', 'Kota Bandung', 'Cimahi'];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('recentLocations', JSON.stringify(recentLocations));
+  }, [recentLocations]);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+
+  const handleSetCurrentAddress = (address: string) => {
+    setCurrentAddress(address);
+    if (address !== 'Mendeteksi...' && address !== 'Lokasi Terdeteksi') {
+      setRecentLocations(prev => {
+        const newRecent = [address, ...prev.filter(loc => loc !== address)].slice(0, 5);
+        return newRecent;
+      });
+    }
+  };
+
+  const detectLocation = () => {
+    if (navigator.geolocation) {
+      setCurrentAddress('Mendeteksi...');
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const { latitude, longitude } = position.coords;
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
+            const data = await response.json();
+            
+            // Extract a readable location name (suburb, village, or city)
+            const address = data.address;
+            let locationName = address.village || address.suburb || address.city_district || address.city || address.town || 'Lokasi Terdeteksi';
+            
+            // Try to map to our known districts
+            let mappedLocation = locationName;
+            for (const city in DISTRICTS) {
+              if (DISTRICTS[city].includes(locationName)) {
+                mappedLocation = `${locationName}, ${city}`;
+                break;
+              }
+            }
+            
+            handleSetCurrentAddress(mappedLocation);
+          } catch (error) {
+            console.error("Error reverse geocoding:", error);
+            handleSetCurrentAddress('Lokasi Terdeteksi');
+          }
+          setShowLocationModal(false);
+        },
+        (error) => {
+          alert('Gagal mendeteksi lokasi. Pastikan izin lokasi diberikan.');
+          handleSetCurrentAddress('Lokasi Bandung Raya & Cimahi');
+        }
+      );
+    } else {
+      alert('Geolocation tidak didukung oleh browser ini.');
+    }
+  };
 
  // Data Iklan
  const [myAds, setMyAds] = useState<any[]>([]);
@@ -409,6 +452,18 @@ export default function App() {
  verifiedAt: serverTimestamp()
  });
 
+ if ((payment as any).type === 'highlight_ad') {
+   // Update the ad to be highlighted
+   await updateDoc(doc(db, 'iklan', (payment as any).adId), {
+     isHighlight: true,
+     img: (payment as any).bannerUrl,
+     foto: (payment as any).bannerUrl
+   });
+   
+   alert('Pembayaran Mitra Unggulan berhasil diverifikasi!');
+   return;
+ }
+
  // Update transaction status to paid
  if ((payment as any).transactionId) {
  await updateDoc(doc(db, 'transactions', (payment as any).transactionId), {
@@ -452,6 +507,14 @@ export default function App() {
  verificationNote: rejectionNote
  });
 
+ if ((selectedPaymentForView as any).type === 'highlight_ad') {
+   alert(`Pendaftaran Mitra Unggulan ditolak. Alasan: ${rejectionNote}`);
+   setShowRejectModal(false);
+   setSelectedPaymentForView(null);
+   setRejectionNote('');
+   return;
+ }
+
  // Send notification to chat
  await addDoc(collection(db, 'chats', selectedPaymentForView.mitraId, 'messages'), {
  sender: 'mitra',
@@ -482,20 +545,44 @@ export default function App() {
  return isNaN(num) ? '0' : num.toLocaleString('id-ID');
  };
 
- const filteredServices = services.filter(s => {
- // Only show active ads (loose check)
- if (s.status !== 'aktif' && s.status !== 'active') return false;
- 
- const title = s.title || '';
- const adCat = (s.category || s.cat || '').toLowerCase();
- 
- const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase());
- const matchesCat = selectedCat === 'all' || adCat === selectedCat.toLowerCase();
- 
- // Removed strict subcategory and location filters to ensure ads show up
- 
- return matchesSearch && matchesCat;
- });
+  const filteredServices = services.filter(s => {
+    // Only show active ads (loose check)
+    if (s.status !== 'aktif' && s.status !== 'active') return false;
+    
+    const title = s.title || '';
+    const adCat = (s.category || s.cat || '').toLowerCase();
+    const adSubCat = (s.subcat || s.subCategory || '').toLowerCase();
+    
+    const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCat = selectedCat === 'all' || adCat === selectedCat.toLowerCase();
+    const matchesSubCat = selectedSub === 'all' || adSubCat === selectedSub.toLowerCase();
+    
+    let matchesLocation = true;
+    if (currentAddress && currentAddress !== 'Lokasi Bandung Raya & Cimahi' && currentAddress !== 'Lokasi Terdeteksi' && currentAddress !== 'Mendeteksi...') {
+      const adCity = s.city || '';
+      const adDistrict = s.district || '';
+      const adCoverage = s.coverageAreas || [];
+      
+      if (currentAddress.includes(',')) {
+        // Format: "District, City"
+        const [dist, city] = currentAddress.split(',').map(str => str.trim());
+        matchesLocation = (adCity === city && adDistrict === dist) || adCoverage.includes(city);
+      } else {
+        // Format: "City" or detected location
+        // If it's a known city, filter by it. Otherwise, assume it's a detected location and don't strictly filter, or maybe we should?
+        // Let's just check if it's a known city.
+        const knownCities = ['Kota Bandung', 'Kota Cimahi', 'Kab. Bandung', 'Kab. Bandung Barat (KBB)'];
+        if (knownCities.includes(currentAddress)) {
+          matchesLocation = adCity === currentAddress || adCoverage.includes(currentAddress);
+        } else {
+          // It's a detected location (e.g., "Cibiru") or something else. We won't filter strictly to avoid hiding all ads.
+          matchesLocation = true;
+        }
+      }
+    }
+    
+    return matchesSearch && matchesCat && matchesSubCat && matchesLocation;
+  });
 
 
 
@@ -977,8 +1064,6 @@ export default function App() {
  user={user}
  userRole={userRole}
  navigateTo={navigateTo}
- setShowLocationModal={setShowLocationModal}
- selectedLocation={selectedLocation}
  isFirebaseConfigured={isFirebaseConfigured}
  searchQuery={searchQuery}
  setSearchQuery={setSearchQuery}
@@ -988,12 +1073,17 @@ export default function App() {
  markNotifsAsRead={markNotifsAsRead}
  notifications={notifications}
  CATEGORIES={CATEGORIES}
+ selectedCat={selectedCat}
  setSelectedCat={setSelectedCat}
  setSelectedSub={setSelectedSub}
  services={services}
  filteredServices={filteredServices}
  openMitraProfile={openMitraProfile}
  formatPrice={formatPrice}
+ currentAddress={currentAddress}
+ setShowLocationModal={setShowLocationModal}
+ favorites={favorites}
+ toggleFavorite={toggleFavorite}
  />
  )}
 
@@ -1058,6 +1148,69 @@ export default function App() {
  />
  )}
 
+ {activePage === 'daftar-mitra-unggulan' && (
+ <DaftarMitraUnggulan
+ user={user}
+ myAds={myAds}
+ handleBack={handleBack}
+ navigateTo={navigateTo}
+ />
+ )}
+
+ {activePage === 'pusat-bantuan' && (
+ <PusatBantuan
+ userRole={userRole}
+ handleBack={handleBack}
+ navigateTo={navigateTo}
+ />
+ )}
+
+ {['bantuan-order', 'bantuan-akun', 'bantuan-pembayaran', 'bantuan-aplikasi', 'bantuan-pesanan-pelanggan', 'bantuan-akun-pelanggan', 'bantuan-pembayaran-pelanggan', 'bantuan-layanan-pelanggan'].includes(activePage) && (
+ <BantuanDetail
+ type={activePage.replace('bantuan-', '') as any}
+ handleBack={handleBack}
+ navigateTo={navigateTo}
+ />
+ )}
+
+ {activePage === 'semua-kategori' && (
+ <SemuaKategori
+ CATEGORIES={CATEGORIES}
+ setSelectedCat={setSelectedCat}
+ setSelectedSub={setSelectedSub}
+ navigateTo={navigateTo}
+ handleBack={handleBack}
+ />
+ )}
+
+ {activePage === 'favorit' && (
+ <Favorit
+ favorites={favorites}
+ services={services}
+ toggleFavorite={toggleFavorite}
+ navigateTo={navigateTo}
+ handleBack={handleBack}
+ openMitraProfile={openMitraProfile}
+ user={user}
+ />
+ )}
+
+ {activePage === 'invoice' && (
+ <Invoice handleBack={handleBack} />
+ )}
+
+ {activePage === 'statistik-mitra' && (
+ <MitraStats handleBack={handleBack} transactions={transactions} user={user} />
+ )}
+
+ {activePage === 'jadwal-mitra' && (
+ <MitraSchedule handleBack={handleBack} />
+ )}
+
+ {activePage === 'lacak-lokasi' && (
+ <LiveTracking handleBack={handleBack} />
+ )}
+
  {/* --- LAYANAN (PROGRESS) --- */}
 
  {activePage === 'layanan' && (
@@ -1068,6 +1221,7 @@ export default function App() {
  setReviewRating={setReviewRating}
  setReviewText={setReviewText}
  setShowReviewModal={setShowReviewModal}
+ navigateTo={navigateTo}
  />
  )}
 
@@ -1135,6 +1289,8 @@ export default function App() {
  openMitraProfile={openMitraProfile}
  setBookingService={setBookingService}
  formatPrice={formatPrice}
+ favorites={favorites}
+ toggleFavorite={toggleFavorite}
  />
  )}
 
@@ -1163,7 +1319,7 @@ export default function App() {
  )}
  {activePage === 'daftar-mitra' && (
  <RegisterMitra
- DISTRICTS={DISTRICTS}
+        DISTRICTS={DISTRICTS}
  handleBack={handleBack}
  navigateTo={navigateTo}
  setIsMitra={setIsMitra}
@@ -1229,29 +1385,8 @@ export default function App() {
     showRejectModal={showRejectModal} setShowRejectModal={setShowRejectModal} rejectionNote={rejectionNote} setRejectionNote={setRejectionNote}
     rejectPayment={rejectPayment} selectedPaymentForView={selectedPaymentForView} setSelectedPaymentForView={setSelectedPaymentForView}
     showLoginMitraModal={showLoginMitraModal} setShowLoginMitraModal={setShowLoginMitraModal} navigateTo={navigateTo}
+    showLocationModal={showLocationModal} setShowLocationModal={setShowLocationModal} currentAddress={currentAddress} setCurrentAddress={handleSetCurrentAddress} recentLocations={recentLocations} detectLocation={detectLocation}
   />
-
- <LocationModal 
- isOpen={showLocationModal}
- onClose={() => setShowLocationModal(false)}
- onSelect={(loc) => {
- setSelectedLocation(loc);
- setShowLocationModal(false);
- // Navigate to subkategori to show filtered ads
- setSelectedCat('all');
- setSelectedSub('all');
- navigateTo('subkategori');
- 
- // Optional: update recent locations
- if (!recentLocations.includes(loc) && loc !== selectedLocation) {
- setRecentLocations([loc, ...recentLocations.slice(0, 2)]);
- }
- }}
- onDetectLocation={detectLocation}
- currentLocation={selectedLocation}
- recentLocations={recentLocations}
- currentAddress={currentAddress}
- />
 
  {/* Bottom Nav (Only on main pages) */}
  {['beranda', 'pesan', 'layanan', 'akun'].includes(activePage) && (

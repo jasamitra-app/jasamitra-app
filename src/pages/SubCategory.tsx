@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { LayoutGrid, Search, Star } from 'lucide-react';
+import { LayoutGrid, Search, Star, Heart, SlidersHorizontal } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 
 interface SubCategoryProps {
@@ -16,6 +16,8 @@ interface SubCategoryProps {
  openMitraProfile: (service: any) => void;
  setBookingService: (service: any) => void;
  formatPrice: (price: number) => string;
+ favorites: string[];
+ toggleFavorite: (id: string) => void;
 }
 
 export const SubCategory: React.FC<SubCategoryProps> = ({
@@ -30,7 +32,9 @@ export const SubCategory: React.FC<SubCategoryProps> = ({
  navigateTo,
  openMitraProfile,
  setBookingService,
- formatPrice
+ formatPrice,
+ favorites,
+ toggleFavorite
 }) => {
  return (
  <motion.div key="subkategori" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
@@ -75,6 +79,10 @@ export const SubCategory: React.FC<SubCategoryProps> = ({
  <h2 className="text-lg font-bold text-slate-800">
  Daftar Jasa {selectedSub === 'all' ? '' : SUB_CATEGORIES[selectedCat]?.find((s: any) => s.id === selectedSub)?.nama}
  </h2>
+ <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 shadow-sm hover:bg-slate-50 transition-colors">
+ <SlidersHorizontal size={14} />
+ Filter
+ </button>
  </div>
  <div className="space-y-4">
  {filteredServices.length > 0 ? (
@@ -84,8 +92,17 @@ export const SubCategory: React.FC<SubCategoryProps> = ({
  layout
  initial={{ opacity: 0, scale: 0.95 }}
  animate={{ opacity: 1, scale: 1 }}
- className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex gap-4"
+ className="bg-white p-4 rounded-3xl shadow-sm border border-slate-100 flex gap-4 relative"
  >
+ <div 
+ onClick={(e) => {
+ e.stopPropagation();
+ toggleFavorite(service.id);
+ }}
+ className="absolute top-4 right-4 w-8 h-8 bg-slate-50 rounded-full flex items-center justify-center border border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer z-10"
+ >
+ <Heart size={16} className={favorites.includes(service.id) ? "fill-rose-500 text-rose-500" : "text-slate-400"} />
+ </div>
  <img 
  src={service.img || undefined} 
  alt={service.title}

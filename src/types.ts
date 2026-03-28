@@ -1,4 +1,4 @@
-export type Page = 'beranda' | 'pesan' | 'layanan' | 'akun' | 'login' | 'daftar-mitra' | 'kebijakan' | 'syarat-ketentuan' | 'edit-profil' | 'alamat-saya' | 'iklan-saya' | 'chat' | 'profil-mitra' | 'pesanan' | 'subkategori' | 'peraturan-pelanggan' | 'protokol-mitra' | 'jaminan-keamanan' | 'admin-pembayaran' | 'syarat-pendaftaran-mitra';
+export type Page = 'beranda' | 'pesan' | 'layanan' | 'akun' | 'login' | 'daftar-mitra' | 'kebijakan' | 'syarat-ketentuan' | 'edit-profil' | 'alamat-saya' | 'iklan-saya' | 'chat' | 'profil-mitra' | 'pesanan' | 'subkategori' | 'peraturan-pelanggan' | 'protokol-mitra' | 'jaminan-keamanan' | 'admin-pembayaran' | 'syarat-pendaftaran-mitra' | 'daftar-mitra-unggulan' | 'pusat-bantuan' | 'bantuan-order' | 'bantuan-akun' | 'bantuan-pembayaran' | 'bantuan-aplikasi' | 'bantuan-pesanan-pelanggan' | 'bantuan-akun-pelanggan' | 'bantuan-pembayaran-pelanggan' | 'bantuan-layanan-pelanggan' | 'semua-kategori' | 'favorit' | 'statistik-mitra' | 'jadwal-mitra' | 'lacak-lokasi' | 'invoice';
 
 export interface Payment {
  id: string;

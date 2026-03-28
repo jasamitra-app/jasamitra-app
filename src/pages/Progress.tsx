@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Clock, PlayCircle, Wrench, CheckCircle2, Star } from 'lucide-react';
+import { Clock, PlayCircle, Wrench, CheckCircle2, Star, ClipboardList, MapPin } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -12,6 +12,7 @@ interface ProgressProps {
  setReviewRating: (rating: number) => void;
  setReviewText: (text: string) => void;
  setShowReviewModal: (show: boolean) => void;
+ navigateTo: (page: string) => void;
 }
 
 const Progress: React.FC<ProgressProps> = ({
@@ -20,7 +21,8 @@ const Progress: React.FC<ProgressProps> = ({
  setReviewTransaction,
  setReviewRating,
  setReviewText,
- setShowReviewModal
+ setShowReviewModal,
+ navigateTo
 }) => {
  return (
  <motion.div 
@@ -165,6 +167,13 @@ const Progress: React.FC<ProgressProps> = ({
  </div>
  <motion.button 
  whileTap={{ scale: 0.95 }}
+ onClick={() => navigateTo('lacak-lokasi')}
+ className="w-full bg-blue-500 text-white py-3 rounded-xl font-bold text-xs shadow-sm flex items-center justify-center gap-2 "
+ >
+ <MapPin size={16} /> Lacak Mitra
+ </motion.button>
+ <motion.button 
+ whileTap={{ scale: 0.95 }}
  onClick={async () => {
  if (window.confirm('Apakah pekerjaan sudah selesai?')) {
  try {
@@ -190,8 +199,9 @@ const Progress: React.FC<ProgressProps> = ({
  </div>
  )}
 
- {t.status === 'completed' && t.customerID === user?.uid && !t.isReviewed && (
+ {t.status === 'completed' && (
  <div className="space-y-3 mt-4">
+ {t.customerID === user?.uid && !t.isReviewed && (
  <motion.button 
  whileTap={{ scale: 0.95 }}
  onClick={() => {
@@ -203,6 +213,14 @@ const Progress: React.FC<ProgressProps> = ({
  className="w-full bg-accent text-white py-3 rounded-xl font-bold text-xs shadow-sm flex items-center justify-center gap-2 "
  >
  <Star size={16} /> Beri Ulasan
+ </motion.button>
+ )}
+ <motion.button 
+ whileTap={{ scale: 0.95 }}
+ onClick={() => navigateTo('invoice')}
+ className="w-full bg-slate-100 text-slate-700 py-3 rounded-xl font-bold text-xs shadow-sm flex items-center justify-center gap-2 border border-slate-200"
+ >
+ <ClipboardList size={16} /> Unduh Invoice
  </motion.button>
  </div>
  )}

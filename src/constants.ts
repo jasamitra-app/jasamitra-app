@@ -70,6 +70,11 @@ export interface Service {
  mitraName?: string;
  status?: 'aktif' | 'nonaktif';
  createdAt?: any;
+ city?: string;
+ district?: string;
+ province?: string;
+ coverageAreas?: string[];
+ skills?: string[];
 }
 
 export const CATEGORIES = [
@@ -232,37 +237,44 @@ export const SUB_CATEGORIES: Record<string, SubCategory[]> = {
 export const SERVICES: Service[] = [];
 
 export const PROVINCES = [
- "Jawa Barat"
+  'Jawa Barat'
 ];
 
 export const CITIES: Record<string, string[]> = {
- "Jawa Barat": ["Kota Bandung", "Kota Cimahi", "Kab Bandung", "Kab Bandung Barat"]
+  'Jawa Barat': [
+    'Kota Bandung',
+    'Kota Cimahi',
+    'Kab. Bandung',
+    'Kab. Bandung Barat (KBB)'
+  ]
 };
 
 export const DISTRICTS: Record<string, string[]> = {
- "Kota Bandung": [
- "Andir", "Antapani", "Arcamanik", "Astanaanyar", "Babakanciparay", 
- "Bandung Kidul", "Bandung Kulon", "Bandung Wetan", "Batununggal", 
- "Bojongloa Kaler", "Bojongloa Kidul", "Buahbatu", "Cibeunying Kaler", 
- "Cibeunying Kidul", "Cibiru", "Cicendo", "Cidadap", "Cinambo", 
- "Coblong", "Gedebage", "Kiaracondong", "Lengkong", "Mandalajati", 
- "Panyileukan", "Rancasari", "Regol", "Sukajadi", "Sukasari", 
- "Sumurbandung", "Ujungberung"
- ],
- "Kota Cimahi": ["Cimahi Utara", "Cimahi Tengah", "Cimahi Selatan"],
- "Kab Bandung": [
- "Arjasari", "Baleendah", "Banjaran", "Bojongsoang", "Cangkuang", 
- "Cicalengka", "Cikancung", "Cilengkrang", "Cileunyi", "Cimaung", 
- "Cimenyan", "Ciparay", "Ciwidey", "Dayeuhkolot", "Ibun", "Katapang", 
- "Kertasari", "Kutawaringin", "Majalaya", "Margaasih", "Margahayu", 
- "Nagreg", "Pacet", "Pameungpeuk", "Pangalengan", "Paseh", 
- "Pasirjambu", "Rancabali", "Rancaekek", "Solokanjeruk", "Soreang"
- ],
- "Kab Bandung Barat": [
- "Batujajar", "Cikalongwetan", "Cihampelas", "Cililin", "Cipatat", 
- "Cipeundeuy", "Cipongkor", "Cisarua", "Gununghalu", "Lembang", 
- "Ngamprah", "Padalarang", "Parongpong", "Rongga", "Saguling", 
- "Sindangkerta"
- ]
+  'Kota Bandung': [
+    'Andir', 'Antapani', 'Arcamanik', 'Astanaanyar', 'Babakan Ciparay', 
+    'Bandung Kidul', 'Bandung Kulon', 'Bandung Wetan', 'Batununggal', 
+    'Bojongloa Kaler', 'Bojongloa Kidul', 'Buahbatu', 'Cibeunying Kaler', 
+    'Cibeunying Kidul', 'Cibiru', 'Cicendo', 'Cidadap', 'Cinambo', 
+    'Coblong', 'Gedebage', 'Kiaracondong', 'Lengkong', 'Mandalajati', 
+    'Panyileukan', 'Rancasari', 'Regol', 'Sukajadi', 'Sukasari', 
+    'Sumur Bandung', 'Ujungberung'
+  ],
+  'Kota Cimahi': [
+    'Cimahi Selatan', 'Cimahi Tengah', 'Cimahi Utara'
+  ],
+  'Kab. Bandung': [
+    'Arjasari', 'Baleendah', 'Banjaran', 'Bojongsoang', 'Cangkuang', 
+    'Cicalengka', 'Cikancung', 'Cilengkrang', 'Cileunyi', 'Cimaung', 
+    'Cimenyan', 'Ciparay', 'Ciwidey', 'Dayeuhkolot', 'Ibun', 'Katapang', 
+    'Kertasari', 'Kutawaringin', 'Majalaya', 'Margaasih', 'Margahayu', 
+    'Nagreg', 'Pacet', 'Pameungpeuk', 'Pangalengan', 'Paseh', 
+    'Pasirjambu', 'Rancabali', 'Rancaekek', 'Solokanjeruk', 'Soreang'
+  ],
+  'Kab. Bandung Barat (KBB)': [
+    'Batujajar', 'Cihampelas', 'Cikalongwetan', 'Cililin', 'Cipatat', 
+    'Cipeundeuy', 'Cipongkor', 'Cisarua', 'Gununghalu', 'Lembang', 
+    'Ngamprah', 'Padalarang', 'Parongpong', 'Rongga', 'Saguling', 
+    'Sindangkerta'
+  ]
 };
 

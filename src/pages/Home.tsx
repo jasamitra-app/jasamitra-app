@@ -1,14 +1,12 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, MapPin, Star, ShieldCheck, ChevronRight, Bell, Heart, ChevronDown, AlertTriangle, X, ClipboardList, MessageSquare, Zap, Image as ImageIcon } from 'lucide-react';
+import { Search, MapPin, Star, ShieldCheck, ChevronRight, Bell, Heart, ChevronDown, AlertTriangle, X, ClipboardList, MessageSquare, Zap, Image as ImageIcon, SlidersHorizontal } from 'lucide-react';
 import { Page } from '../types';
 
 interface HomeProps {
  user: any;
  userRole: 'tamu' | 'mitra' | 'admin' | 'pelanggan' | null;
  navigateTo: (page: Page) => void;
- setShowLocationModal: (show: boolean) => void;
- selectedLocation: string;
  isFirebaseConfigured: boolean;
  searchQuery: string;
  setSearchQuery: (query: string) => void;
@@ -18,20 +16,23 @@ interface HomeProps {
  markNotifsAsRead: () => Promise<void>;
  notifications: any[];
  CATEGORIES: any[];
+ selectedCat: string;
  setSelectedCat: (cat: string) => void;
  setSelectedSub: (sub: string) => void;
  services: any[];
  filteredServices: any[];
  openMitraProfile: (service: any) => void;
  formatPrice: (price: any) => string;
+  currentAddress?: string;
+  setShowLocationModal?: (show: boolean) => void;
+  favorites: string[];
+  toggleFavorite: (id: string) => void;
 }
 
 export const Home: React.FC<HomeProps> = ({
  user,
  userRole,
  navigateTo,
- setShowLocationModal,
- selectedLocation,
  isFirebaseConfigured,
  searchQuery,
  setSearchQuery,
@@ -41,12 +42,17 @@ export const Home: React.FC<HomeProps> = ({
  markNotifsAsRead,
  notifications,
  CATEGORIES,
+ selectedCat,
  setSelectedCat,
  setSelectedSub,
  services,
  filteredServices,
  openMitraProfile,
- formatPrice
+ formatPrice,
+  currentAddress = 'Lokasi Bandung Raya & Cimahi',
+  setShowLocationModal,
+  favorites,
+  toggleFavorite
 }) => {
  return (
  <motion.div 
@@ -68,16 +74,11 @@ export const Home: React.FC<HomeProps> = ({
  <span className="text-[#003366]">JASA</span>
  <span className="text-[#F27D26]">MITRA</span>
  </h1>
- <motion.div 
- whileHover={{ scale: 1.05, translateY: -2 }}
- whileTap={{ scale: 0.95 }}
- onClick={() => setShowLocationModal(true)}
- className="flex items-center gap-1 text-slate-500 cursor-pointer hover:text-primary transition-colors bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm"
- >
- <MapPin size={12} className="text-primary" />
- <span className="text-[10px] font-bold truncate max-w-[80px]">{selectedLocation}</span>
- <ChevronDown size={12} />
- </motion.div>
+  <div id="location-selector" onClick={() => setShowLocationModal && setShowLocationModal(true)} className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
+    <MapPin size={14} className="text-primary" />
+    <span className="text-[10px] font-bold text-slate-700 max-w-[100px] truncate">{currentAddress}</span>
+    <ChevronDown size={12} className="text-slate-400" />
+  </div>
  </div>
 
  {!isFirebaseConfigured && (
@@ -107,9 +108,15 @@ export const Home: React.FC<HomeProps> = ({
  <motion.div 
  whileHover={{ scale: 1.1, translateY: -2 }}
  whileTap={{ scale: 0.9 }} 
+ onClick={() => navigateTo('favorit')}
  className="relative text-slate-600 bg-white p-2 rounded-xl border border-slate-200 shadow-sm cursor-pointer"
  >
  <Heart size={20} />
+ {favorites.length > 0 && (
+ <div className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 border-2 border-white rounded-full flex items-center justify-center shadow-sm">
+ <span className="text-[8px] text-white font-bold">{favorites.length}</span>
+ </div>
+ )}
  </motion.div>
  <motion.div 
  whileHover={{ scale: 1.1, translateY: -2 }}
@@ -247,32 +254,38 @@ export const Home: React.FC<HomeProps> = ({
  className="rounded-2xl overflow-hidden shadow-sm border border-slate-200 cursor-pointer group"
  >
  <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity z-10" />
- <img src="https://i.ibb.co.com/zhMNLMZ2/file-000000000ce0720885e11afeef41a414.png" alt="Protokol Keselamatan" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500" />
+ <img src="https://i.ibb.co.com/wF3vLkXV/1774644753080.png" alt="Protokol Keselamatan" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500" />
  </motion.div>
  </section>
 
- {/* Categories (Smaller boxes like in photo) */}
+ {/* Kategori (Horizontal Scroll) */}
  <section className="mb-8 relative z-20">
- <div className="grid grid-cols-4 gap-y-5 gap-x-3">
- {CATEGORIES.map((cat) => (
+ <div className="flex items-center justify-between mb-4">
+ <h2 className="text-base font-bold text-slate-800 tracking-tight">Pilih Kategori Jasa</h2>
+ </div>
+ <div className="flex gap-3 overflow-x-auto pb-4 hide-scrollbar -mx-5 px-5 snap-x snap-mandatory">
+ {CATEGORIES.map((cat) => {
+ const isActive = selectedCat === cat.id;
+ return (
  <motion.button 
  key={cat.id}
- whileHover={{ scale: 1.05, translateY: -2 }}
+ whileHover={{ scale: 1.05 }}
  whileTap={{ scale: 0.95 }}
  onClick={() => {
+ if (cat.id === 'all') {
+ navigateTo('semua-kategori');
+ } else {
  setSelectedCat(cat.id);
  setSelectedSub('all');
- navigateTo('subkategori');
+ }
  }}
- className="flex flex-col items-center gap-1.5 group"
+ className={`flex items-center gap-2 px-4 py-2.5 rounded-full border shadow-sm shrink-0 snap-center transition-all duration-300 ${isActive ? 'bg-primary border-primary text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-primary/30 hover:bg-slate-50'}`}
  >
- <div className={`w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 shadow-sm relative overflow-hidden transition-all group-hover:bg-white group-hover:shadow-sm`}>
- <div className={`absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity`} />
- <cat.icon size={20} strokeWidth={2} className="relative z-10 group-hover:text-primary transition-colors" />
- </div>
- <span className="text-[9px] font-bold text-slate-600 tracking-tight text-center leading-tight group-hover:text-primary transition-colors">{cat.name}</span>
+ <cat.icon size={16} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-500'} />
+ <span className={`text-[11px] font-bold tracking-tight ${isActive ? 'text-white' : 'text-slate-700'}`}>{cat.name}</span>
  </motion.button>
- ))}
+ );
+ })}
  </div>
  </section>
 
@@ -300,8 +313,14 @@ export const Home: React.FC<HomeProps> = ({
  <ImageIcon size={24} className="text-slate-400 opacity-50" />
  )}
  {/* Heart Icon */}
- <div className="absolute top-2 right-2 w-7 h-7 bg-black/40 rounded-full flex items-center justify-center border border-slate-200">
- <Heart size={14} className="text-white" />
+ <div 
+ onClick={(e) => {
+ e.stopPropagation();
+ toggleFavorite(slot.id);
+ }}
+ className="absolute top-2 right-2 w-7 h-7 bg-black/40 rounded-full flex items-center justify-center border border-slate-200 hover:bg-black/60 transition-colors"
+ >
+ <Heart size={14} className={favorites.includes(slot.id) ? "fill-rose-500 text-rose-500" : "text-white"} />
  </div>
  </div>
  
@@ -367,6 +386,10 @@ export const Home: React.FC<HomeProps> = ({
  <section className="mb-8 relative z-20">
  <div className="flex items-center justify-between mb-4">
  <h2 className="text-lg font-bold text-slate-800">Rekomendasi Jasa</h2>
+ <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 shadow-sm hover:bg-slate-50 transition-colors">
+ <SlidersHorizontal size={14} />
+ Filter
+ </button>
  </div>
  <div className="grid grid-cols-2 gap-3">
  {filteredServices.length > 0 ? filteredServices.slice(0, 6).map((service) => (
