@@ -93,6 +93,7 @@ export const Account: React.FC<AccountProps> = ({ user, userRole, navigateTo, se
  >
  {[
  { id: 'admin-pembayaran', label: 'Verifikasi Pembayaran', icon: ShieldCheck, color: 'text-emerald-600', bg: 'bg-emerald-50', show: userRole === 'admin' },
+ { id: 'admin-partner', label: 'Kelola Partner JasaMitra', icon: Star, color: 'text-emerald-600', bg: 'bg-emerald-50', show: userRole === 'admin' },
  { id: 'peraturan-pelanggan', label: 'Peraturan Pelanggan', icon: Info, color: 'text-slate-600', bg: 'bg-slate-100', show: userRole === 'pelanggan' },
  { id: 'protokol-mitra', label: 'Protokol Keselamatan', icon: ShieldCheck, color: 'text-slate-600', bg: 'bg-slate-100', show: userRole === 'mitra' },
  { id: 'pesanan', label: 'Pesanan Masuk (Mitra)', icon: Handshake, color: 'text-slate-600', bg: 'bg-slate-100', show: userRole === 'mitra' },
@@ -103,6 +104,7 @@ export const Account: React.FC<AccountProps> = ({ user, userRole, navigateTo, se
  { id: 'jadwal-mitra', label: 'Jadwal Kerja', icon: Calendar, color: 'text-slate-600', bg: 'bg-slate-50', show: userRole === 'mitra' },
  { id: 'daftar-mitra-unggulan', label: 'Daftar Mitra Unggulan', icon: Star, color: 'text-amber-600', bg: 'bg-amber-50', show: userRole === 'mitra' },
  { id: 'pusat-bantuan', label: userRole === 'mitra' ? 'Pusat Bantuan Mitra' : 'Pusat Bantuan', icon: HelpCircle, color: 'text-blue-600', bg: 'bg-blue-50', show: userRole === 'mitra' || userRole === 'pelanggan' },
+ { id: 'partner-jasamitra', label: 'Partner JasaMitra', icon: Star, color: 'text-emerald-600', bg: 'bg-emerald-50', show: userRole === 'pelanggan' || userRole === 'mitra' },
  { id: 'kebijakan', label: 'Kebijakan Privasi & Keamanan', icon: ShieldCheck, color: 'text-slate-500', bg: 'bg-slate-50', show: true },
  { id: 'syarat-ketentuan', label: 'Syarat & Ketentuan', icon: FileText, color: 'text-slate-500', bg: 'bg-slate-50', show: true },
  ].filter(item => item.show).map((item, index) => (

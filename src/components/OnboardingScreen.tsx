@@ -175,4 +175,3 @@ export const OnboardingScreen = ({ onSelect }: { onSelect: (role: 'pelanggan' | 
     </motion.div>
   );
 };
-

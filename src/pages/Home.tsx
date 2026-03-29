@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, MapPin, Star, ShieldCheck, ChevronRight, Bell, Heart, ChevronDown, AlertTriangle, X, ClipboardList, MessageSquare, Zap, Image as ImageIcon, SlidersHorizontal } from 'lucide-react';
+import { Search, MapPin, Star, ShieldCheck, ChevronRight, Bell, Heart, ChevronDown, AlertTriangle, X, ClipboardList, MessageSquare, Zap, Image as ImageIcon, SlidersHorizontal, Store } from 'lucide-react';
 import { Page } from '../types';
+import { PartnerJasaMitra } from '../components/PartnerJasaMitra';
 
 interface HomeProps {
  user: any;
@@ -258,7 +259,7 @@ export const Home: React.FC<HomeProps> = ({
  </motion.div>
  </section>
 
- {/* Kategori (Horizontal Scroll) */}
+ {/* Kategori (Grid) */}
  <section className="mb-8 relative z-20">
  <div className="flex items-center justify-between mb-4">
  <h2 className="text-base font-bold text-slate-800 tracking-tight">Pilih Kategori Jasa</h2>
@@ -277,12 +278,13 @@ export const Home: React.FC<HomeProps> = ({
  } else {
  setSelectedCat(cat.id);
  setSelectedSub('all');
+ navigateTo('subkategori');
  }
  }}
- className={`flex items-center gap-2 px-4 py-2.5 rounded-full border shadow-sm shrink-0 snap-center transition-all duration-300 ${isActive ? 'bg-primary border-primary text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-primary/30 hover:bg-slate-50'}`}
+ className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border shadow-sm shrink-0 snap-center min-w-[85px] max-w-[85px] transition-all duration-300 aspect-square ${isActive ? 'bg-primary border-primary text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-primary/30 hover:bg-slate-50'}`}
  >
- <cat.icon size={16} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-500'} />
- <span className={`text-[11px] font-bold tracking-tight ${isActive ? 'text-white' : 'text-slate-700'}`}>{cat.name}</span>
+ <cat.icon size={24} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-500'} />
+ <span className={`text-[10px] font-bold tracking-tight text-center leading-tight ${isActive ? 'text-white' : 'text-slate-700'}`}>{cat.name}</span>
  </motion.button>
  );
  })}
@@ -381,6 +383,9 @@ export const Home: React.FC<HomeProps> = ({
  ))}
  </div>
  </section>
+
+ {/* Partner JasaMitra */}
+ <PartnerJasaMitra />
 
  {/* Home Service List (Recommendations Only) */}
  <section className="mb-8 relative z-20">

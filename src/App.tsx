@@ -74,6 +74,8 @@ import { Modals } from './components/Modals';
 import { PageHeader } from './components/PageHeader';
 import { Login } from './pages/Login';
 import { Account } from './pages/Account';
+import { PartnerJasaMitraPage } from './pages/PartnerJasaMitra';
+import { AdminPartnerPage } from './pages/AdminPartner';
 import { DaftarMitraUnggulan } from './pages/DaftarMitraUnggulan';
 import { PusatBantuan } from './pages/PusatBantuan';
 import { BantuanDetail } from './pages/BantuanDetail';
@@ -1165,6 +1167,19 @@ export default function App() {
  />
  )}
 
+ {activePage === 'partner-jasamitra' && (
+ <PartnerJasaMitraPage
+ user={user}
+ navigateTo={navigateTo}
+ />
+ )}
+
+ {activePage === 'admin-partner' && (
+ <AdminPartnerPage
+ navigateTo={navigateTo}
+ />
+ )}
+
  {['bantuan-order', 'bantuan-akun', 'bantuan-pembayaran', 'bantuan-aplikasi', 'bantuan-pesanan-pelanggan', 'bantuan-akun-pelanggan', 'bantuan-pembayaran-pelanggan', 'bantuan-layanan-pelanggan'].includes(activePage) && (
  <BantuanDetail
  type={activePage.replace('bantuan-', '') as any}
@@ -1180,6 +1195,13 @@ export default function App() {
  setSelectedSub={setSelectedSub}
  navigateTo={navigateTo}
  handleBack={handleBack}
+ filteredServices={filteredServices}
+ openMitraProfile={openMitraProfile}
+ formatPrice={formatPrice}
+ favorites={favorites}
+ toggleFavorite={toggleFavorite}
+ user={user}
+ setBookingService={setBookingService}
  />
  )}
 

@@ -71,7 +71,7 @@ export const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
             >
               <img 
                 src="https://i.ibb.co.com/G3Crzbc1/jasamitra-logo.webp"
-                alt="JASA MITRA Logo" 
+                alt="JASAMITRA Logo" 
                 className="w-52 h-52 md:w-64 md:h-64 object-contain"
                 style={{
                   filter: "drop-shadow(0 20px 25px rgba(0,51,102,0.15))"
