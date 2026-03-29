@@ -295,7 +295,12 @@ export const Home: React.FC<HomeProps> = ({
  <section className="mb-10 relative z-20">
  <div className="flex items-center justify-between mb-4">
  <h2 className="text-base font-bold text-slate-800 tracking-tight">Mitra Unggulan</h2>
- <button className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline">Lihat Semua</button>
+ <button 
+   onClick={() => navigateTo('mitra-unggulan')}
+   className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline"
+ >
+   Lihat Semua
+ </button>
  </div>
  <div className="flex gap-3 overflow-x-auto pb-4 hide-scrollbar -mx-5 px-5">
  {[...services.filter(s => s.isHighlight === true), ...Array(10)].slice(0, 10).map((slot, i) => slot ? (

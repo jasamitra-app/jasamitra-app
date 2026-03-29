@@ -92,6 +92,7 @@ import { IncomingOrders } from './pages/IncomingOrders';
 import { MitraProfile } from './pages/MitraProfile';
 import { RegisterMitra } from './pages/RegisterMitra';
 import { SemuaKategori } from './pages/SemuaKategori';
+import { MitraUnggulanList } from './pages/MitraUnggulanList';
 import { Favorit } from './pages/Favorit';
 import { Invoice } from './pages/Invoice';
 import { MitraStats } from './pages/MitraStats';
@@ -1202,6 +1203,14 @@ export default function App() {
  toggleFavorite={toggleFavorite}
  user={user}
  setBookingService={setBookingService}
+ />
+ )}
+
+ {activePage === 'mitra-unggulan' && (
+ <MitraUnggulanList
+ services={services}
+ handleBack={handleBack}
+ openMitraProfile={openMitraProfile}
  />
  )}
 

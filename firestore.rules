@@ -1,9 +1,149 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Basic rules for JasaMitra
+
+    // ================================
+    // HELPER FUNCTIONS
+    // ================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ================================
+    // USERS
+    // ================================
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      
+      // FIX: Menggunakan diff() untuk memastikan field 'role' TIDAK disentuh sama sekali oleh user biasa
+      allow update: if isOwner(userId) && 
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) || isAdmin());
+        
+      allow delete: if isAdmin();
+    }
+
+    // ================================
+    // MITRAS (PUBLIC PROFILE)
+    // ================================
+    match /mitras/{mitraId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.auth.uid == mitraId;
+      allow update: if isOwner(mitraId);
+      allow delete: if isAdmin();
+    }
+
+    // ================================
+    // IKLAN
+    // ================================
+    match /iklan/{docId} {
+      allow read: if true;
+      allow create: if isAuthenticated() &&
+        request.resource.data.mitraId == request.auth.uid;
+      allow update, delete: if isAuthenticated() &&
+        resource.data.mitraId == request.auth.uid;
+    }
+
+    // ================================
+    // REVIEWS
+    // ================================
+    match /reviews/{docId} {
+      allow read: if true;
+      // FIX: User hanya bisa bikin review atas nama dirinya sendiri (mencegah spam/spoofing)
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+    }
+
+    // ================================
+    // ORDERS, TRANSACTIONS, PAYMENTS
+    // ================================
+    match /orders/{id} {
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    match /transactions/{id} {
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    match /payments/{id} {
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    // ================================
+    // CHATS
+    // ================================
+    match /chats/{chatId} {
+      // FIX: Validasi participants harus berisi user yang login DAN jumlahnya tepat 2 orang (1-on-1)
+      allow create: if isAuthenticated() && 
+        request.auth.uid in request.resource.data.participants &&
+        request.resource.data.participants.size() == 2;
+
+      allow read, update, delete: if isAuthenticated() && request.auth.uid in resource.data.participants;
+
+      match /messages/{messageId} {
+        allow create: if isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        allow read, update, delete: if isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+      }
+    }
+
+    // ================================
+    // NOTIFICATIONS
+    // ================================
+    match /notifications/{notifId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    // ================================
+    // PARTNERS (BANNER IKLAN)
+    // ================================
+    match /partners/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ================================
+    // PARTNER REQUESTS (JASAMITRA)
+    // ================================
+    match /partnerRequests/{requestId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == "pending";
+
+      // FIX: User HANYA boleh update untuk mengirim bukti bayar (approved -> waiting_verification)
+      allow update: if isAdmin() || (
+        isAuthenticated() &&
+        resource.data.userId == request.auth.uid &&
+        resource.data.status == "approved" &&
+        request.resource.data.status == "waiting_verification"
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // ================================
+    // DEFAULT (BLOCK ALL)
+    // ================================
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }

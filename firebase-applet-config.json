@@ -1,10 +1,10 @@
 {
-  "projectId": "gen-lang-client-0997662123",
-  "appId": "1:755564937780:web:e564d410f5b8ca249d8061",
-  "apiKey": "AIzaSyCs9ONjQF2YbdXV2aUro4v4Ry8k4g5Y_kU",
-  "authDomain": "gen-lang-client-0997662123.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-529ff432-e127-4b62-baec-c2b9724efd4e",
-  "storageBucket": "gen-lang-client-0997662123.firebasestorage.app",
-  "messagingSenderId": "755564937780",
-  "measurementId": ""
+  "apiKey": "AIzaSyCbTCPkb7efb-DM-V9ZpMU4LgLoGG_6PZ8",
+  "authDomain": "jasa-mitra-app.firebaseapp.com",
+  "projectId": "jasa-mitra-app",
+  "storageBucket": "jasa-mitra-app.firebasestorage.app",
+  "messagingSenderId": "720360339553",
+  "appId": "1:720360339553:web:675030e984b2e793b95220",
+  "measurementId": "G-0GV6T91SR7",
+  "firestoreDatabaseId": "(default)"
 }
