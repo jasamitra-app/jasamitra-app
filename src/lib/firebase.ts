@@ -13,6 +13,7 @@ try {
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   
+  // Use getFirestore with the database ID if provided and not default
   if (firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== "(default)") {
     db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
   } else {

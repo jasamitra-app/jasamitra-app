@@ -13,6 +13,7 @@ interface ProgressProps {
  setReviewText: (text: string) => void;
  setShowReviewModal: (show: boolean) => void;
  navigateTo: (page: string) => void;
+ setActiveInvoiceTransaction: (t: any) => void;
 }
 
 const Progress: React.FC<ProgressProps> = ({
@@ -22,7 +23,8 @@ const Progress: React.FC<ProgressProps> = ({
  setReviewRating,
  setReviewText,
  setShowReviewModal,
- navigateTo
+ navigateTo,
+ setActiveInvoiceTransaction
 }) => {
  return (
  <motion.div 
@@ -217,7 +219,10 @@ const Progress: React.FC<ProgressProps> = ({
  )}
  <motion.button 
  whileTap={{ scale: 0.95 }}
- onClick={() => navigateTo('invoice')}
+ onClick={() => {
+   setActiveInvoiceTransaction(t);
+   navigateTo('invoice');
+ }}
  className="w-full bg-slate-100 text-slate-700 py-3 rounded-xl font-bold text-xs shadow-sm flex items-center justify-center gap-2 border border-slate-200"
  >
  <ClipboardList size={16} /> Unduh Invoice

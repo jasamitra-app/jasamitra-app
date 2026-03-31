@@ -6,7 +6,7 @@ export const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
     // Set to 10 seconds as requested
     const timer = setTimeout(onComplete, 10000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [onComplete]);
 
   return (
     <motion.div 

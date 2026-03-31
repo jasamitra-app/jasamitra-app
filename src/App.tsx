@@ -197,6 +197,14 @@ export default function App() {
  const [notifications, setNotifications] = useState<any[]>([]);
  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+   const [kaffaForm, setKaffaForm] = useState({
+ nama: '',
+ wa: '',
+ jenis: 'Handphone',
+ model: '',
+ keluhan: ''
+ });
+ const [kaffaPhotos, setKaffaPhotos] = useState<string[]>([]);
 
   const [currentAddress, setCurrentAddress] = useState(() => {
     return localStorage.getItem('currentAddress') || 'Lokasi Bandung Raya & Cimahi';
@@ -1246,6 +1254,7 @@ export default function App() {
  setReviewText={setReviewText}
  setShowReviewModal={setShowReviewModal}
  navigateTo={navigateTo}
+ setActiveInvoiceTransaction={setActiveInvoiceTransaction}
  />
  )}
 

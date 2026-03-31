@@ -255,7 +255,7 @@ export const Home: React.FC<HomeProps> = ({
  className="rounded-2xl overflow-hidden shadow-sm border border-slate-200 cursor-pointer group"
  >
  <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity z-10" />
- <img src="https://i.ibb.co.com/wF3vLkXV/1774644753080.png" alt="Protokol Keselamatan" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500" />
+ <img src="https://i.ibb.co.com/4nJGn8N3/1774644753080-1.webp" alt="Protokol Keselamatan" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
  </motion.div>
  </section>
 
@@ -270,7 +270,7 @@ export const Home: React.FC<HomeProps> = ({
  return (
  <motion.button 
  key={cat.id}
- whileHover={{ scale: 1.05, translateY: -2 }}
+ whileHover={{ scale: 1.05 }}
  whileTap={{ scale: 0.95 }}
  onClick={() => {
  if (cat.id === 'all') {
@@ -281,10 +281,10 @@ export const Home: React.FC<HomeProps> = ({
  navigateTo('subkategori');
  }
  }}
- className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-[14px] shrink-0 snap-center min-w-[68px] max-w-[68px] transition-all duration-300 aspect-square ${isActive ? 'bg-primary text-white shadow-[0_8px_16px_-6px_rgba(0,51,102,0.3)]' : 'bg-white text-slate-600 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)] hover:bg-slate-50'}`}
+ className={`flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border shadow-sm shrink-0 snap-center min-w-[85px] max-w-[85px] transition-all duration-300 aspect-square ${isActive ? 'bg-primary border-primary text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-primary/30 hover:bg-slate-50'}`}
  >
- <cat.icon size={20} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-500'} />
- <span className={`text-[8px] font-bold tracking-tight text-center leading-tight ${isActive ? 'text-white' : 'text-slate-700'}`}>{cat.name}</span>
+ <cat.icon size={24} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-white' : 'text-slate-500'} />
+ <span className={`text-[10px] font-bold tracking-tight text-center leading-tight ${isActive ? 'text-white' : 'text-slate-700'}`}>{cat.name}</span>
  </motion.button>
  );
  })}

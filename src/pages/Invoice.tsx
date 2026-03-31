@@ -36,18 +36,12 @@ export const Invoice: React.FC<InvoiceProps> = ({ handleBack, transaction }) => 
     setIsGenerating(true);
     
     try {
-      // Hide download button during capture
-      const btn = document.getElementById('download-btn');
-      if (btn) btn.style.display = 'none';
-
       const canvas = await html2canvas(invoiceRef.current, {
         scale: 2, // Higher resolution
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff'
       });
-
-      if (btn) btn.style.display = 'flex';
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
@@ -185,6 +179,7 @@ export const Invoice: React.FC<InvoiceProps> = ({ handleBack, transaction }) => 
           {/* Download Button (Hidden in PDF) */}
           <button 
             id="download-btn"
+            data-html2canvas-ignore="true"
             onClick={generatePDF}
             disabled={isGenerating}
             className={`w-full mt-8 py-4 rounded-xl font-bold text-xs shadow-sm flex items-center justify-center gap-2 transition-all ${isGenerating ? 'bg-slate-100 text-slate-400' : 'bg-[#003366] text-white hover:bg-blue-900'}`}
