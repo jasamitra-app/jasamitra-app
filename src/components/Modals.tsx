@@ -49,7 +49,7 @@ export function Modals({
     <AnimatePresence>
       {/* Location Modal */}
       {showLocationModal && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[4000] flex items-end justify-center bg-slate-900/60">
+        <motion.div key="location-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[4000] flex items-end justify-center bg-slate-900/60">
           <motion.div 
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -144,7 +144,7 @@ export function Modals({
 
       {/* Ad Modal */}
       {showAdModal && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[4000] flex items-end justify-center bg-slate-900/60 ">
+        <motion.div key="ad-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[4000] flex items-end justify-center bg-slate-900/60 ">
           <motion.div 
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
@@ -405,7 +405,7 @@ export function Modals({
 
       {/* Deal Modal */}
       {showDealModal && activeDeal && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[4000] flex items-center justify-center bg-slate-900/80 p-6">
+        <motion.div key="deal-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[4000] flex items-center justify-center bg-slate-900/80 p-6">
           <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white w-full max-w-sm rounded-[48px] p-8 shadow-sm overflow-hidden relative border border-slate-100">
             <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-slate-50 to-transparent -z-10" />
             
@@ -476,6 +476,7 @@ export function Modals({
       {/* Booking Modal */}
       {bookingService && (
         <motion.div 
+          key="booking-modal"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -573,9 +574,8 @@ export function Modals({
 
       {/* Review Modal */}
       {showReviewModal && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4">
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        <motion.div key="review-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4">
+          <div 
             onClick={() => setShowReviewModal(false)}
             className="absolute inset-0 bg-primary/60 "
           />
@@ -628,14 +628,13 @@ export function Modals({
               </button>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
 
       {/* Offer Modal */}
       {showOfferModal && (
-        <div className="fixed inset-0 z-[3000] flex items-end sm:items-center justify-center p-4">
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        <motion.div key="offer-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[3000] flex items-end sm:items-center justify-center p-4">
+          <div 
             onClick={() => setShowOfferModal(false)}
             className="absolute inset-0 bg-slate-900/60 "
           />
@@ -702,14 +701,13 @@ export function Modals({
               </button>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
 
       {/* Payment Modal */}
       {showPaymentModal && (
-        <div className="fixed inset-0 z-[3000] flex items-end sm:items-center justify-center p-4">
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        <motion.div key="payment-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[3000] flex items-end sm:items-center justify-center p-4">
+          <div 
             onClick={() => setShowPaymentModal(false)}
             className="absolute inset-0 bg-slate-900/60 "
           />
@@ -759,10 +757,34 @@ export function Modals({
                   </label>
                 </div>
               </div>
+
+              {/* Checkbox Persetujuan */}
+              <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 mt-4">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="relative flex items-center justify-center mt-0.5">
+                    <input 
+                      type="checkbox" 
+                      id="payment-agreement"
+                      className="peer appearance-none w-5 h-5 border-2 border-slate-300 rounded bg-white checked:bg-blue-600 checked:border-blue-600 transition-colors cursor-pointer"
+                    />
+                    <CheckCircle2 size={14} className="absolute text-white opacity-0 peer-checked:opacity-100 pointer-events-none" />
+                  </div>
+                  <p className="text-[11px] text-slate-600 font-medium leading-relaxed flex-1">
+                    Saya setuju dan mengikat janji untuk membayar sisa tagihan sebesar <strong className="text-slate-800">90% secara tunai</strong> langsung kepada Mitra setelah pekerjaan selesai sesuai kesepakatan.
+                  </p>
+                </label>
+              </div>
             </div>
 
             <button 
-              onClick={submitPayment}
+              onClick={() => {
+                const checkbox = document.getElementById('payment-agreement') as HTMLInputElement;
+                if (!checkbox?.checked) {
+                  alert('Silakan centang kotak persetujuan terlebih dahulu untuk melanjutkan pembayaran.');
+                  return;
+                }
+                submitPayment();
+              }}
               disabled={isUploadingPayment || !paymentProofPreview || paymentAmount <= 0}
               className={`w-full py-5 rounded-[24px] font-black text-xs tracking-[0.15em] shadow-sm flex items-center justify-center gap-3 transition-all ${isUploadingPayment || !paymentProofPreview || paymentAmount <= 0 ? 'bg-slate-100 text-slate-300' : 'bg-emerald-600 text-white active:scale-95'}`}
             >
@@ -775,14 +797,13 @@ export function Modals({
               )}
             </button>
           </motion.div>
-        </div>
+        </motion.div>
       )}
 
       {/* Reject Modal */}
       {showRejectModal && (
-        <div className="fixed inset-0 z-[4000] flex items-end sm:items-center justify-center p-4">
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        <motion.div key="reject-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[4000] flex items-end sm:items-center justify-center p-4">
+          <div 
             onClick={() => setShowRejectModal(false)}
             className="absolute inset-0 bg-slate-900/60 "
           />
@@ -817,13 +838,12 @@ export function Modals({
               </button>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
 
       {selectedPaymentForView && !showRejectModal && (
-        <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4">
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        <motion.div key="view-payment-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[5000] flex items-center justify-center p-4">
+          <div 
             onClick={() => setSelectedPaymentForView(null)}
             className="absolute inset-0 bg-slate-900/95 "
           />
@@ -839,14 +859,13 @@ export function Modals({
             </button>
             <img src={selectedPaymentForView.proofUrl || undefined} className="w-full h-full object-contain" alt="Bukti Transfer Zoom" />
           </motion.div>
-        </div>
+        </motion.div>
       )}
 
       {/* Login Mitra Modal */}
       {showLoginMitraModal && (
-        <div className="fixed inset-0 z-[4000] flex items-end sm:items-center justify-center p-4">
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        <motion.div key="login-mitra-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[4000] flex items-end sm:items-center justify-center p-4">
+          <div 
             onClick={() => setShowLoginMitraModal(false)}
             className="absolute inset-0 bg-slate-900/60 "
           />
@@ -878,7 +897,7 @@ export function Modals({
               </button>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

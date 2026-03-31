@@ -134,6 +134,7 @@ export default function App() {
   } = useUI();
   const [activePage, setActivePage] = useState<Page>('beranda');
   const [prevPage, setPrevPage] = useState<Page | null>(null);
+  const [activeInvoiceTransaction, setActiveInvoiceTransaction] = useState<any>(null);
 
   const {
     mitraOrders, transactions, pendingPayments, selectedPaymentForView, setSelectedPaymentForView,
@@ -196,14 +197,6 @@ export default function App() {
  const [notifications, setNotifications] = useState<any[]>([]);
  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
-   const [kaffaForm, setKaffaForm] = useState({
- nama: '',
- wa: '',
- jenis: 'Handphone',
- model: '',
- keluhan: ''
- });
- const [kaffaPhotos, setKaffaPhotos] = useState<string[]>([]);
 
   const [currentAddress, setCurrentAddress] = useState(() => {
     return localStorage.getItem('currentAddress') || 'Lokasi Bandung Raya & Cimahi';
@@ -1227,7 +1220,7 @@ export default function App() {
  )}
 
  {activePage === 'invoice' && (
- <Invoice handleBack={handleBack} />
+ <Invoice handleBack={handleBack} transaction={activeInvoiceTransaction} />
  )}
 
  {activePage === 'statistik-mitra' && (

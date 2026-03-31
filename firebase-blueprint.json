@@ -1,0 +1,54 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile data",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["customer", "admin"] },
+        "createdAt": { "type": "timestamp" }
+      },
+      "required": ["uid", "displayName", "email", "role"]
+    },
+    "ServiceTicket": {
+      "title": "ServiceTicket",
+      "description": "A ticket for a device repair service",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerAddress": { "type": "string" },
+        "deviceOS": { "type": "string", "enum": ["android", "ios"] },
+        "deviceModel": { "type": "string" },
+        "damageDescription": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "checking", "quotation", "negotiating", "working", "payment_pending", "completed", "rejected"] },
+        "diagnosis": { "type": "string" },
+        "options": { "type": "array" },
+        "selectedOptionId": { "type": "string" },
+        "paymentMethod": { "type": "string", "enum": ["cash", "transfer"] },
+        "paymentProofUrl": { "type": "string" },
+        "repairProofUrl": { "type": "string" },
+        "chatMessages": { "type": "array" },
+        "createdAt": { "type": "timestamp" },
+        "updatedAt": { "type": "timestamp" }
+      },
+      "required": ["userId", "customerName", "customerAddress", "deviceOS", "deviceModel", "damageDescription", "status"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "UserProfile" },
+      "description": "Stores user profiles"
+    },
+    "tickets/{ticketId}": {
+      "schema": { "$ref": "ServiceTicket" },
+      "description": "Stores service tickets"
+    }
+  }
+}

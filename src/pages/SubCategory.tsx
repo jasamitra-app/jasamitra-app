@@ -54,7 +54,7 @@ export const SubCategory: React.FC<SubCategoryProps> = ({
  <div className="flex gap-2.5 overflow-x-auto pb-3 hide-scrollbar">
  <button 
  onClick={() => setSelectedSub('all')}
- className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all border-2 whitespace-nowrap font-bold text-[11px] ${selectedSub === 'all' ? 'bg-primary text-white border-primary shadow-sm ' : 'bg-white border-slate-100 text-slate-500 shadow-sm'}`}
+ className={`px-4 py-2 rounded-[12px] flex items-center gap-2 transition-all whitespace-nowrap font-bold text-[10px] ${selectedSub === 'all' ? 'bg-primary text-white shadow-[0_4px_12px_-4px_rgba(0,51,102,0.3)]' : 'bg-white text-slate-500 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-50'}`}
  >
  <LayoutGrid size={14} />
  Semua
@@ -63,7 +63,7 @@ export const SubCategory: React.FC<SubCategoryProps> = ({
  <button 
  key={sub.id}
  onClick={() => setSelectedSub(sub.id)}
- className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all border-2 whitespace-nowrap font-bold text-[11px] ${selectedSub === sub.id ? 'bg-primary text-white border-primary shadow-sm ' : 'bg-white border-slate-100 text-slate-500 shadow-sm'}`}
+ className={`px-4 py-2 rounded-[12px] flex items-center gap-2 transition-all whitespace-nowrap font-bold text-[10px] ${selectedSub === sub.id ? 'bg-primary text-white shadow-[0_4px_12px_-4px_rgba(0,51,102,0.3)]' : 'bg-white text-slate-500 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:bg-slate-50'}`}
  >
  <sub.icon size={14} />
  {sub.nama}
