@@ -1,32 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ChevronLeft, Upload, CheckCircle, Clock, AlertCircle, Info, Image as ImageIcon } from 'lucide-react';
+import { ChevronLeft, Upload, CheckCircle, Clock, AlertCircle, Info, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 import { Page } from '../types';
 import { db, storage } from '../lib/firebase';
-import { collection, addDoc, query, where, onSnapshot, updateDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, query, where, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface PartnerJasaMitraProps {
   user: any;
   navigateTo: (page: Page) => void;
+  setActiveSubscriptionInvoiceId: (id: string) => void;
 }
 
-interface PartnerRequest {
-  id: string;
-  userId: string;
-  namaToko: string;
-  alamat: string;
-  linkTujuan: string;
-  linkValue: string;
-  bannerUrl: string;
-  status: 'pending' | 'approved' | 'waiting_verification' | 'active' | 'rejected';
-  paymentProofUrl?: string;
-  createdAt: any;
-}
+const PACKAGES = [
+  { id: '1_month', durationDays: 30, price: 200000, label: '1 Bulan' },
+  { id: '3_months', durationDays: 90, price: 550000, label: '3 Bulan (Lebih Hemat)' }
+];
 
-export const PartnerJasaMitraPage: React.FC<PartnerJasaMitraProps> = ({ user, navigateTo }) => {
+export const PartnerJasaMitraPage: React.FC<PartnerJasaMitraProps> = ({ user, navigateTo, setActiveSubscriptionInvoiceId }) => {
   const [showAbout, setShowAbout] = useState(false);
-  const [request, setRequest] = useState<PartnerRequest | null>(null);
+  const [request, setRequest] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   
   // Form state
@@ -36,12 +29,8 @@ export const PartnerJasaMitraPage: React.FC<PartnerJasaMitraProps> = ({ user, na
   const [linkValue, setLinkValue] = useState('');
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerPreview, setBannerPreview] = useState('');
+  const [selectedPackage, setSelectedPackage] = useState(PACKAGES[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Payment state
-  const [paymentFile, setPaymentFile] = useState<File | null>(null);
-  const [paymentPreview, setPaymentPreview] = useState('');
-  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -49,11 +38,22 @@ export const PartnerJasaMitraPage: React.FC<PartnerJasaMitraProps> = ({ user, na
       return;
     }
 
-    const q = query(collection(db, 'partnerRequests'), where('userId', '==', user.uid));
+    // Check if there's an existing active or pending subscription invoice for this user
+    const q = query(
+      collection(db, 'subscription_invoices'), 
+      where('userId', '==', user.uid),
+      where('type', '==', 'partner')
+    );
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (!snapshot.empty) {
-        const doc = snapshot.docs[0];
-        setRequest({ id: doc.id, ...doc.data() } as PartnerRequest);
+        // Find the most relevant invoice (active > waiting > pending)
+        const docs = snapshot.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+        const active = docs.find(d => d.status === 'paid');
+        const waiting = docs.find(d => d.status === 'waiting_verification');
+        const pending = docs.find(d => d.status === 'pending');
+        
+        setRequest(active || waiting || pending || null);
       } else {
         setRequest(null);
       }
@@ -74,14 +74,6 @@ export const PartnerJasaMitraPage: React.FC<PartnerJasaMitraProps> = ({ user, na
     }
   };
 
-  const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setPaymentFile(file);
-      setPaymentPreview(URL.createObjectURL(file));
-    }
-  };
-
   const handleSubmitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !bannerFile || !namaToko || !alamat || !linkValue) return;
@@ -93,51 +85,38 @@ export const PartnerJasaMitraPage: React.FC<PartnerJasaMitraProps> = ({ user, na
       await uploadBytes(bannerRef, bannerFile);
       const bannerUrl = await getDownloadURL(bannerRef);
 
-      // Save to Firestore
-      await addDoc(collection(db, 'partnerRequests'), {
+      // Generate unique code and calculate total
+      const uniqueCode = Math.floor(Math.random() * 900) + 100; // 100-999
+      const totalAmount = selectedPackage.price + uniqueCode;
+
+      // Create a subscription invoice
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours to pay
+
+      const invoiceRef = await addDoc(collection(db, 'subscription_invoices'), {
+        type: 'partner',
         userId: user.uid,
         userName: user.displayName || user.email || 'User',
         namaToko,
         alamat,
         linkTujuan,
         linkValue,
+        package: selectedPackage,
+        uniqueCode,
+        totalAmount,
         bannerUrl,
         status: 'pending',
-        createdAt: new Date()
+        createdAt: serverTimestamp(),
+        expiresAt
       });
 
-      alert('Pendaftaran berhasil dikirim! Menunggu persetujuan admin.');
+      setActiveSubscriptionInvoiceId(invoiceRef.id);
+      navigateTo('subscription-invoice');
     } catch (error) {
       console.error("Error submitting request:", error);
       alert('Terjadi kesalahan. Silakan coba lagi.');
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleSubmitPayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !request || !paymentFile) return;
-
-    setIsSubmittingPayment(true);
-    try {
-      // Upload payment proof
-      const paymentRef = ref(storage, `payments/partner_${user.uid}_${Date.now()}_${paymentFile.name}`);
-      await uploadBytes(paymentRef, paymentFile);
-      const paymentProofUrl = await getDownloadURL(paymentRef);
-
-      // Update Firestore
-      await updateDoc(doc(db, 'partnerRequests', request.id), {
-        paymentProofUrl,
-        status: 'waiting_verification'
-      });
-
-      alert('Bukti pembayaran berhasil dikirim! Menunggu verifikasi admin.');
-    } catch (error) {
-      console.error("Error submitting payment:", error);
-      alert('Terjadi kesalahan. Silakan coba lagi.');
-    } finally {
-      setIsSubmittingPayment(false);
     }
   };
 
@@ -205,17 +184,17 @@ export const PartnerJasaMitraPage: React.FC<PartnerJasaMitraProps> = ({ user, na
                   <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Clock size={32} />
                   </div>
-                  <h2 className="text-lg font-bold text-slate-800 mb-2">Menunggu Persetujuan</h2>
-                  <p className="text-sm text-slate-500">Pengajuan Anda sedang ditinjau oleh tim admin kami.</p>
-                </>
-              )}
-              {request.status === 'approved' && (
-                <>
-                  <div className="w-16 h-16 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle size={32} />
-                  </div>
-                  <h2 className="text-lg font-bold text-slate-800 mb-2">Pengajuan Disetujui!</h2>
-                  <p className="text-sm text-slate-500">Silakan lakukan pembayaran iklan untuk mengaktifkan banner Anda.</p>
+                  <h2 className="text-lg font-bold text-slate-800 mb-2">Menunggu Pembayaran</h2>
+                  <p className="text-sm text-slate-500">Selesaikan pembayaran untuk mengaktifkan Partner Anda.</p>
+                  <button 
+                    onClick={() => {
+                      setActiveSubscriptionInvoiceId(request.id);
+                      navigateTo('subscription-invoice');
+                    }}
+                    className="mt-4 bg-amber-500 text-white px-6 py-2 rounded-xl font-bold"
+                  >
+                    Lihat Tagihan
+                  </button>
                 </>
               )}
               {request.status === 'waiting_verification' && (
@@ -227,7 +206,7 @@ export const PartnerJasaMitraPage: React.FC<PartnerJasaMitraProps> = ({ user, na
                   <p className="text-sm text-slate-500">Bukti pembayaran Anda sedang diverifikasi. Banner akan segera aktif.</p>
                 </>
               )}
-              {request.status === 'active' && (
+              {request.status === 'paid' && (
                 <>
                   <div className="w-16 h-16 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4">
                     <CheckCircle size={32} />
@@ -246,55 +225,12 @@ export const PartnerJasaMitraPage: React.FC<PartnerJasaMitraProps> = ({ user, na
                 </>
               )}
             </div>
-
-            {request.status === 'approved' && (
-              <div className="p-6 bg-slate-50">
-                <form onSubmit={handleSubmitPayment}>
-                  <div className="mb-4">
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Upload Bukti Transfer</label>
-                    <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center relative bg-white">
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handlePaymentChange}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        required
-                      />
-                      {paymentPreview ? (
-                        <img src={paymentPreview} alt="Preview" className="max-h-40 mx-auto rounded-lg" />
-                      ) : (
-                        <div className="py-4">
-                          <Upload size={24} className="mx-auto text-slate-400 mb-2" />
-                          <span className="text-sm text-slate-500">Tap untuk upload foto</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <button 
-                    type="submit" 
-                    disabled={isSubmittingPayment || !paymentFile}
-                    className="w-full bg-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-sm disabled:opacity-50"
-                  >
-                    {isSubmittingPayment ? 'Mengirim...' : 'Kirim Bukti'}
-                  </button>
-                </form>
-              </div>
-            )}
           </div>
         ) : (
           // Registration Form
           <>
-            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 mb-6">
-              <h3 className="text-emerald-800 font-bold text-lg mb-2">Harga Spesial</h3>
-              <div className="text-3xl font-black text-emerald-600 mb-3">Rp 200.000 <span className="text-sm font-medium text-emerald-700">/ bulan</span></div>
-              <ul className="space-y-2 text-sm text-emerald-700 font-medium">
-                <li className="flex items-center gap-2"><CheckCircle size={16} /> Slot terbatas</li>
-                <li className="flex items-center gap-2"><CheckCircle size={16} /> Segera daftar sebelum slot habis</li>
-              </ul>
-            </div>
-
             <form onSubmit={handleSubmitRequest} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-              <h3 className="font-bold text-slate-800 mb-4">Form Pendaftaran</h3>
+              <h3 className="font-bold text-slate-800 mb-4">Form Pendaftaran Partner</h3>
               
               <div className="space-y-4">
                 <div>
@@ -374,6 +310,31 @@ export const PartnerJasaMitraPage: React.FC<PartnerJasaMitraProps> = ({ user, na
                     )}
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5 mt-4">Pilih Paket</label>
+                  <div className="space-y-3">
+                    {PACKAGES.map(pkg => (
+                      <div 
+                        key={pkg.id}
+                        onClick={() => setSelectedPackage(pkg)}
+                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                          selectedPackage.id === pkg.id 
+                            ? 'border-emerald-500 bg-emerald-50' 
+                            : 'border-slate-100 hover:border-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-bold text-slate-800 text-sm">{pkg.label}</p>
+                            <p className="text-xs font-bold text-emerald-600 mt-1">Rp {pkg.price.toLocaleString('id-ID')}</p>
+                          </div>
+                          {selectedPackage.id === pkg.id && <CheckCircle2 size={20} className="text-emerald-500" />}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <button 
@@ -381,7 +342,7 @@ export const PartnerJasaMitraPage: React.FC<PartnerJasaMitraProps> = ({ user, na
                 disabled={isSubmitting || !bannerFile}
                 className="w-full mt-6 bg-emerald-500 text-white font-bold py-4 rounded-xl shadow-sm disabled:opacity-50"
               >
-                {isSubmitting ? 'Mengirim...' : 'Kirim ke Admin'}
+                {isSubmitting ? 'Memproses...' : 'Lanjut ke Pembayaran'}
               </button>
             </form>
           </>

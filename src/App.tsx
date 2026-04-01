@@ -62,6 +62,7 @@ import {
  DISTRICTS
 } from './constants';
 import { auth, db, storage, isFirebaseConfigured } from './lib/firebase';
+import { checkAndExpireSubscriptions } from './lib/subscriptionUtils';
 import { onAuthStateChanged, User as FirebaseUser, signOut, updateProfile, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { collection, query, onSnapshot, addDoc, serverTimestamp, getDocs, where, orderBy, updateDoc, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -95,6 +96,7 @@ import { SemuaKategori } from './pages/SemuaKategori';
 import { MitraUnggulanList } from './pages/MitraUnggulanList';
 import { Favorit } from './pages/Favorit';
 import { Invoice } from './pages/Invoice';
+import { SubscriptionInvoice } from './pages/SubscriptionInvoice';
 import { MitraStats } from './pages/MitraStats';
 import { MitraSchedule } from './pages/MitraSchedule';
 import { LiveTracking } from './pages/LiveTracking';
@@ -132,9 +134,38 @@ export default function App() {
     tempAddress, setTempAddress,
     isUploadingProfile, setIsUploadingProfile
   } = useUI();
-  const [activePage, setActivePage] = useState<Page>('beranda');
+  const [activePage, setActivePage] = useState<Page>(() => {
+    const hash = window.location.hash.replace('#', '');
+    return (hash as Page) || 'beranda';
+  });
   const [prevPage, setPrevPage] = useState<Page | null>(null);
   const [activeInvoiceTransaction, setActiveInvoiceTransaction] = useState<any>(null);
+  const [activeSubscriptionInvoiceId, setActiveSubscriptionInvoiceId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Initialize history state on mount if it doesn't exist
+    if (!window.history.state) {
+      window.history.replaceState({ page: activePage }, '', `#${activePage}`);
+    }
+
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state && event.state.page) {
+        const page = event.state.page;
+        if (page === 'beranda') {
+          setSelectedCat('all');
+          setSelectedSub('all');
+        }
+        setActivePage(page);
+      } else {
+        setSelectedCat('all');
+        setSelectedSub('all');
+        setActivePage('beranda');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const {
     mitraOrders, transactions, pendingPayments, selectedPaymentForView, setSelectedPaymentForView,
@@ -148,7 +179,7 @@ export default function App() {
     try {
       await logout();
       setShowOnboarding(true);
-      setActivePage('beranda');
+      navigateTo('beranda');
       alert('Berhasil keluar');
     } catch (error: any) {
       alert('Gagal keluar: ' + error.message);
@@ -339,6 +370,9 @@ export default function App() {
  if (user) {
  const filtered = services.filter(s => s.mitraId === user.uid);
  setMyAds(filtered);
+ 
+ // Check for expired subscriptions
+ checkAndExpireSubscriptions(user.uid);
  } else {
  setMyAds([]);
  }
@@ -662,23 +696,21 @@ export default function App() {
  }
  });
  }
+ 
+ if (page !== activePage) {
+ window.history.pushState({ page }, '', `#${page}`);
+ }
+ 
  setPrevPage(activePage);
  setActivePage(page);
  window.scrollTo({ top: 0, behavior: 'smooth' });
  };
 
  const handleBack = () => {
- if (prevPage) {
- if (prevPage === 'beranda') {
- setSelectedCat('all');
- setSelectedSub('all');
- }
- setActivePage(prevPage);
- setPrevPage(null);
+ if (window.history.length > 1) {
+ window.history.back();
  } else {
- setSelectedCat('all');
- setSelectedSub('all');
- setActivePage('beranda');
+ navigateTo('beranda');
  }
  };
 
@@ -1158,6 +1190,7 @@ export default function App() {
  myAds={myAds}
  handleBack={handleBack}
  navigateTo={navigateTo}
+ setActiveSubscriptionInvoiceId={setActiveSubscriptionInvoiceId}
  />
  )}
 
@@ -1173,6 +1206,7 @@ export default function App() {
  <PartnerJasaMitraPage
  user={user}
  navigateTo={navigateTo}
+ setActiveSubscriptionInvoiceId={setActiveSubscriptionInvoiceId}
  />
  )}
 
@@ -1229,6 +1263,10 @@ export default function App() {
 
  {activePage === 'invoice' && (
  <Invoice handleBack={handleBack} transaction={activeInvoiceTransaction} />
+ )}
+
+ {activePage === 'subscription-invoice' && (
+ <SubscriptionInvoice user={user} invoiceId={activeSubscriptionInvoiceId} handleBack={handleBack} navigateTo={navigateTo} />
  )}
 
  {activePage === 'statistik-mitra' && (

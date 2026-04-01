@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'motion/react';
-import { ArrowLeft, Upload, Star, CheckCircle2, AlertCircle, Copy } from 'lucide-react';
+import { ArrowLeft, Upload, Star, CheckCircle2, AlertCircle } from 'lucide-react';
 import { PageHeader } from '../components/PageHeader';
 import { db, storage } from '../lib/firebase';
-import { doc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface DaftarMitraUnggulanProps {
@@ -11,18 +11,22 @@ interface DaftarMitraUnggulanProps {
   myAds: any[];
   handleBack: () => void;
   navigateTo: (page: any) => void;
+  setActiveSubscriptionInvoiceId: (id: string) => void;
 }
 
-export const DaftarMitraUnggulan: React.FC<DaftarMitraUnggulanProps> = ({ user, myAds, handleBack, navigateTo }) => {
+const PACKAGES = [
+  { id: '14_days', durationDays: 14, price: 100000, label: '14 Hari' },
+  { id: '30_days', durationDays: 30, price: 180000, label: '30 Hari (Lebih Hemat)' }
+];
+
+export const DaftarMitraUnggulan: React.FC<DaftarMitraUnggulanProps> = ({ user, myAds, handleBack, navigateTo, setActiveSubscriptionInvoiceId }) => {
   const [selectedAdId, setSelectedAdId] = useState<string>('');
+  const [selectedPackage, setSelectedPackage] = useState(PACKAGES[0]);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
-  const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
-  const [paymentProofPreview, setPaymentProofPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const bannerInputRef = useRef<HTMLInputElement>(null);
-  const paymentInputRef = useRef<HTMLInputElement>(null);
 
   const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -41,28 +45,6 @@ export const DaftarMitraUnggulan: React.FC<DaftarMitraUnggulanProps> = ({ user, 
     reader.readAsDataURL(file);
   };
 
-  const handlePaymentProofChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Ukuran file maksimal 2MB');
-      return;
-    }
-
-    setPaymentProofFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPaymentProofPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    alert('Nomor rekening disalin!');
-  };
-
   const handleSubmit = async () => {
     if (!selectedAdId) {
       alert('Pilih iklan jasa yang ingin diunggulkan.');
@@ -70,10 +52,6 @@ export const DaftarMitraUnggulan: React.FC<DaftarMitraUnggulanProps> = ({ user, 
     }
     if (!bannerFile) {
       alert('Harap unggah foto banner/portofolio khusus.');
-      return;
-    }
-    if (!paymentProofFile) {
-      alert('Harap unggah bukti transfer pembayaran.');
       return;
     }
 
@@ -84,28 +62,30 @@ export const DaftarMitraUnggulan: React.FC<DaftarMitraUnggulanProps> = ({ user, 
       await uploadBytes(bannerRef, bannerFile);
       const bannerUrl = await getDownloadURL(bannerRef);
 
-      // 2. Upload the payment proof
-      const paymentRef = storageRef(storage, `payments/${user.uid}/${Date.now()}_proof_${paymentProofFile.name}`);
-      await uploadBytes(paymentRef, paymentProofFile);
-      const paymentUrl = await getDownloadURL(paymentRef);
+      // 2. Generate unique code and calculate total
+      const uniqueCode = Math.floor(Math.random() * 900) + 100; // 100-999
+      const totalAmount = selectedPackage.price + uniqueCode;
 
-      // 3. Create a payment record for admin verification
-      await addDoc(collection(db, 'payments'), {
-        type: 'highlight_ad',
-        adId: selectedAdId,
+      // 3. Create a subscription invoice
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours to pay
+
+      const invoiceRef = await addDoc(collection(db, 'subscription_invoices'), {
+        type: 'mitra_unggulan',
         userId: user.uid,
         userName: user.displayName || 'Mitra',
-        amount: 100000,
-        dealAmount: 100000,
-        dpAmount: 100000,
-        proofUrl: paymentUrl,
-        bannerUrl: bannerUrl, // Store banner URL to apply later
+        adId: selectedAdId,
+        package: selectedPackage,
+        uniqueCode,
+        totalAmount,
+        bannerUrl,
         status: 'pending',
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        expiresAt
       });
 
-      alert('Pendaftaran berhasil dikirim! Silakan tunggu verifikasi dari Admin.');
-      navigateTo('beranda');
+      setActiveSubscriptionInvoiceId(invoiceRef.id);
+      navigateTo('subscription-invoice');
     } catch (error: any) {
       console.error('Error submitting highlight request:', error);
       alert('Gagal memproses pendaftaran: ' + error.message);
@@ -132,10 +112,6 @@ export const DaftarMitraUnggulan: React.FC<DaftarMitraUnggulanProps> = ({ user, 
           <p className="text-sm text-amber-50 opacity-90 mb-4">
             Jadikan jasa Anda sebagai Mitra Unggulan dan dapatkan lebih banyak pelanggan dengan tampil di halaman utama.
           </p>
-          <div className="bg-white/20 rounded-xl p-3 inline-block">
-            <p className="text-xs font-bold uppercase tracking-wider text-amber-100 mb-1">Biaya Promosi</p>
-            <p className="text-2xl font-black">Rp 100.000 <span className="text-sm font-normal opacity-80">/ 14 hari</span></p>
-          </div>
         </div>
 
         <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
@@ -171,7 +147,32 @@ export const DaftarMitraUnggulan: React.FC<DaftarMitraUnggulanProps> = ({ user, 
         </div>
 
         <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-          <h3 className="text-sm font-bold text-slate-800 mb-4">2. Upload Banner / Portofolio</h3>
+          <h3 className="text-sm font-bold text-slate-800 mb-4">2. Pilih Paket</h3>
+          <div className="space-y-3">
+            {PACKAGES.map(pkg => (
+              <div 
+                key={pkg.id}
+                onClick={() => setSelectedPackage(pkg)}
+                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                  selectedPackage.id === pkg.id 
+                    ? 'border-amber-500 bg-amber-50' 
+                    : 'border-slate-100 hover:border-slate-200'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-slate-800 text-sm">{pkg.label}</p>
+                    <p className="text-xs font-bold text-amber-600 mt-1">Rp {pkg.price.toLocaleString('id-ID')}</p>
+                  </div>
+                  {selectedPackage.id === pkg.id && <CheckCircle2 size={20} className="text-amber-500" />}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+          <h3 className="text-sm font-bold text-slate-800 mb-4">3. Upload Banner / Portofolio</h3>
           <p className="text-xs text-slate-500 mb-4">
             Unggah foto terbaik yang merepresentasikan jasa Anda. Foto ini akan ditampilkan di deretan Mitra Unggulan.
           </p>
@@ -208,64 +209,12 @@ export const DaftarMitraUnggulan: React.FC<DaftarMitraUnggulanProps> = ({ user, 
           )}
         </div>
 
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-          <h3 className="text-sm font-bold text-slate-800 mb-4">3. Pembayaran</h3>
-          
-          <div className="bg-slate-50 rounded-2xl p-4 mb-4 border border-slate-100">
-            <p className="text-xs text-slate-500 mb-1">Transfer ke Rekening BCA</p>
-            <div className="flex items-center justify-between">
-              <p className="text-lg font-black text-slate-800 tracking-wider">123 456 7890</p>
-              <button 
-                onClick={() => copyToClipboard('1234567890')}
-                className="p-2 bg-white rounded-xl shadow-sm text-primary hover:bg-primary hover:text-white transition-colors"
-              >
-                <Copy size={16} />
-              </button>
-            </div>
-            <p className="text-xs font-bold text-slate-600 mt-1">a.n JasaMitra Indonesia</p>
-          </div>
-
-          <p className="text-xs text-slate-500 mb-4">
-            Silakan transfer sebesar <span className="font-bold text-slate-800">Rp 100.000</span> dan unggah bukti transfer di bawah ini.
-          </p>
-
-          <input 
-            type="file" 
-            accept="image/*" 
-            className="hidden" 
-            ref={paymentInputRef}
-            onChange={handlePaymentProofChange}
-          />
-
-          {paymentProofPreview ? (
-            <div className="relative aspect-video rounded-2xl overflow-hidden border border-slate-200 group">
-              <img src={paymentProofPreview} alt="Bukti Transfer" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <button 
-                  onClick={() => paymentInputRef.current?.click()}
-                  className="bg-white text-slate-800 px-4 py-2 rounded-xl text-xs font-bold"
-                >
-                  Ganti Bukti Transfer
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button 
-              onClick={() => paymentInputRef.current?.click()}
-              className="w-full py-8 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 hover:text-emerald-500 hover:border-emerald-500 hover:bg-emerald-50 transition-colors"
-            >
-              <Upload size={24} className="mb-2" />
-              <span className="text-sm font-bold">Upload Bukti Transfer</span>
-            </button>
-          )}
-        </div>
-
         <button 
           onClick={handleSubmit}
-          disabled={isSubmitting || !selectedAdId || !bannerFile || !paymentProofFile}
+          disabled={isSubmitting || !selectedAdId || !bannerFile}
           className="w-full bg-amber-500 text-white py-4 rounded-2xl font-bold shadow-lg shadow-amber-500/30 active:scale-95 transition-transform disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
         >
-          {isSubmitting ? 'Memproses...' : 'Kirim Pendaftaran'}
+          {isSubmitting ? 'Memproses...' : 'Lanjut ke Pembayaran'}
         </button>
       </main>
     </motion.div>
