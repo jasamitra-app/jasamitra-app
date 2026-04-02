@@ -511,10 +511,11 @@ export default function App() {
  }
 
  // Send notification to chat
- await addDoc(collection(db, 'chats', payment.mitraId, 'messages'), {
+ const chatId = [payment.userId, payment.mitraId].sort().join('_');
+ await addDoc(collection(db, 'chats', chatId, 'messages'), {
  sender: 'mitra', // Admin acting as system/mitra
  type: 'text',
- content: `✅ Pembayaran DP 10% sebesar Rp ${payment.dpAmount.toLocaleString()} telah diverifikasi. Pekerjaan dapat dimulai.`,
+ content: `✅ Pembayaran DP 10% sebesar Rp ${payment.dpAmount?.toLocaleString() || payment.amount?.toLocaleString()} telah diverifikasi. Pekerjaan dapat dimulai.`,
  time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
  timestamp: serverTimestamp()
  });
@@ -522,6 +523,7 @@ export default function App() {
  // Send payment_success notification to Mitra
  await addDoc(collection(db, 'notifications'), {
  recipientId: payment.mitraId,
+ senderId: 'admin',
  title: 'Pembayaran DP Diverifikasi!',
  message: `Pelanggan sudah bayar DP 10%.\nSilahkan hubungi pelanggan\nSelamat bekerja dan semangat demi keluarga ❤️`,
  type: 'payment_success',
@@ -554,7 +556,8 @@ export default function App() {
  }
 
  // Send notification to chat
- await addDoc(collection(db, 'chats', selectedPaymentForView.mitraId, 'messages'), {
+ const chatIdReject = [selectedPaymentForView.userId, selectedPaymentForView.mitraId].sort().join('_');
+ await addDoc(collection(db, 'chats', chatIdReject, 'messages'), {
  sender: 'mitra',
  type: 'text',
  content: `❌ Pembayaran DP 10% ditolak. Alasan: ${rejectionNote}. Silakan upload ulang.`,
@@ -973,12 +976,14 @@ export default function App() {
       const total = basePrice;
       const dp = Math.round(total * 0.1);
 
-      await addDoc(collection(db, 'orders'), {
+      await addDoc(collection(db, 'transactions'), {
         serviceId: bookingService.id,
         serviceTitle: bookingService.title,
+        mitraID: bookingService.mitraId || 'unknown',
         mitraId: bookingService.mitraId || 'unknown',
         mitraName: bookingService.mitraName || 'Mitra Jasa',
-        customerId: user?.uid,
+        userId: user?.uid,
+        customerID: user?.uid,
         customerName: bookingName,
         address: bookingAddress,
         description: bookingDesc,
@@ -1010,7 +1015,7 @@ export default function App() {
     try {
       await addDoc(collection(db, 'reviews'), {
         mitraId: reviewTransaction.mitraID,
-        customerId: user.uid,
+        userId: user.uid,
         customerName: user.displayName || 'Pelanggan',
         rating: reviewRating,
         text: reviewText,

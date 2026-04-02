@@ -146,6 +146,7 @@ export function useOrder(user: FirebaseUser | null, userRole: string | null, act
 
       await addDoc(collection(db, 'notifications'), {
         recipientId: chatMitra?.id,
+        senderId: user.uid,
         title: 'Pesanan Baru!',
         message: `${user.displayName || 'Pelanggan'} telah menyetujui deal untuk ${activeDeal.jasa}.`,
         type: 'order',
@@ -192,6 +193,7 @@ export function useOrder(user: FirebaseUser | null, userRole: string | null, act
 
       await addDoc(collection(db, 'notifications'), {
         recipientId: activeTransaction.customerID,
+        senderId: user.uid,
         title: 'Penawaran Baru!',
         message: `${user.displayName || 'Mitra'} telah memberikan penawaran harga untuk pesanan Anda.`,
         type: 'offer',
@@ -224,6 +226,7 @@ export function useOrder(user: FirebaseUser | null, userRole: string | null, act
       await addDoc(collection(db, 'payments'), {
         transactionId: activeTransaction.id,
         userId: user.uid,
+        mitraId: activeTransaction.mitraID || activeTransaction.mitraId || 'unknown',
         amount: paymentAmount,
         proofUrl: url,
         status: 'pending',
@@ -238,6 +241,7 @@ export function useOrder(user: FirebaseUser | null, userRole: string | null, act
 
       await addDoc(collection(db, 'notifications'), {
         recipientId: 'admin',
+        senderId: user.uid,
         title: 'Pembayaran Baru',
         message: `Pelanggan ${user.displayName || ''} telah mengupload bukti pembayaran.`,
         type: 'payment',

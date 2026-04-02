@@ -45,7 +45,7 @@ const Messages: React.FC<MessagesProps> = ({ user, userChats, setChatMitra, navi
  ) : (
  userChats.map((chat, index) => {
  const otherId = chat.participants.find((p: string) => p !== user?.uid);
- const otherName = chat.participantNames[otherId] || 'User';
+ const otherName = chat.participantNames?.[otherId] || 'User';
  return (
  <motion.button 
  key={chat.id}

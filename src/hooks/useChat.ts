@@ -55,10 +55,14 @@ export function useChat(user: FirebaseUser | null) {
         // Try mitras collection first
         let docSnap = await getDoc(doc(db, 'mitras', chatMitra.id));
         if (!docSnap.exists()) {
-          // Fallback to users collection
-          docSnap = await getDoc(doc(db, 'users', chatMitra.id));
+          // Fallback to users collection (might fail due to security rules if not admin/owner)
+          try {
+            docSnap = await getDoc(doc(db, 'users', chatMitra.id));
+          } catch (err) {
+            console.warn("Permission denied reading user profile (expected for normal users)");
+          }
         }
-        if (docSnap.exists()) {
+        if (docSnap && docSnap.exists()) {
           const data = docSnap.data();
           setChatMitraPhone(data.phone || data.wa || '');
         }

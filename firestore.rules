@@ -50,9 +50,24 @@ service cloud.firestore {
     match /iklan/{docId} {
       allow read: if true;
       allow create: if isAuthenticated() &&
-        request.resource.data.mitraId == request.auth.uid;
-      allow update, delete: if isAuthenticated() &&
-        resource.data.mitraId == request.auth.uid;
+        request.resource.data.mitraId == request.auth.uid &&
+        (!request.resource.data.keys().hasAny(['isFeatured', 'featuredUntil', 'featuredBannerUrl']) || request.resource.data.isFeatured == false);
+        
+      // FIX: Mencegah user mengaktifkan isFeatured sendiri, kecuali admin atau sistem otomatis yang mematikan (isFeatured = false)
+      allow update: if isAuthenticated() && resource.data.mitraId == request.auth.uid &&
+        (
+          (
+            request.resource.data.get('isFeatured', false) == resource.data.get('isFeatured', false) &&
+            request.resource.data.get('featuredUntil', null) == resource.data.get('featuredUntil', null) &&
+            request.resource.data.get('featuredBannerUrl', null) == resource.data.get('featuredBannerUrl', null)
+          ) || 
+          (
+            request.resource.data.get('isFeatured', false) == false
+          ) ||
+          isAdmin()
+        );
+        
+      allow delete: if isAuthenticated() && resource.data.mitraId == request.auth.uid;
     }
 
     // ================================
@@ -71,17 +86,17 @@ service cloud.firestore {
     // ================================
     match /orders/{id} {
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow read, update, delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || resource.data.mitraId == request.auth.uid);
     }
 
     match /transactions/{id} {
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow read, update, delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || resource.data.mitraId == request.auth.uid);
     }
 
     match /payments/{id} {
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow read, update, delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow read, update, delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || resource.data.mitraId == request.auth.uid);
     }
 
     // ================================
@@ -105,9 +120,9 @@ service cloud.firestore {
     // NOTIFICATIONS
     // ================================
     match /notifications/{notifId} {
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAdmin();
-      allow update, delete: if isAdmin();
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || resource.data.recipientId == request.auth.uid);
+      allow create: if isAdmin() || (isAuthenticated() && request.resource.data.recipientId == request.auth.uid);
+      allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.recipientId == request.auth.uid);
     }
 
     // ================================
@@ -119,7 +134,45 @@ service cloud.firestore {
     }
 
     // ================================
-    // PARTNER REQUESTS (JASAMITRA)
+    // SUBSCRIPTION INVOICES (JASAMITRA & MITRA UNGGULAN)
+    // ================================
+    match /subscription_invoices/{invoiceId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == "pending";
+
+      // FIX: User HANYA boleh update untuk mengirim bukti bayar, atau sistem otomatis mengubah ke expired
+      allow update: if isAdmin() || (
+        isAuthenticated() &&
+        resource.data.userId == request.auth.uid &&
+        (
+          // 1. Upload bukti bayar (pending -> waiting_verification)
+          (
+            resource.data.status == "pending" &&
+            request.resource.data.status == "waiting_verification" &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'proofUrl', 'updatedAt'])
+          ) ||
+          // 2. Expire subscription otomatis dari client (paid -> expired)
+          (
+            resource.data.status == "paid" &&
+            request.resource.data.status == "expired" &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          ) ||
+          // 3. Update expiryNotified (pengingat 2 hari)
+          (
+            resource.data.status == "paid" &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['expiryNotified'])
+          )
+        )
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // ================================
+    // PARTNER REQUESTS (LEGACY)
     // ================================
     match /partnerRequests/{requestId} {
       allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
